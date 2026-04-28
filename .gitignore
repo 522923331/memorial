@@ -47,3 +47,4 @@ nbdist/
 !*/build/*.xml
 /ruoyi-admin/logs/
 /README.md
+/logs/
