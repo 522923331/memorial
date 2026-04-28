@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.mapper.OrderMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.domain.MemOrder">
+        <id property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="orgId" column="org_id"/>
+        <result property="deceasedId" column="deceased_id"/>
+        <result property="customerName" column="customer_name"/>
+        <result property="customerPhone" column="customer_phone"/>
+        <result property="packageType" column="package_type"/>
+        <result property="amount" column="amount"/>
+        <result property="status" column="status"/>
+        <result property="payTime" column="pay_time"/>
+        <result property="remark" column="remark"/>
+        <result property="orgName" column="org_name"/>
+        <result property="deceasedName" column="deceased_name"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectOrderList" parameterType="MemOrder" resultMap="BaseResultMap">
+        select o.order_id, o.order_no, o.org_id, o.deceased_id, o.customer_name, o.customer_phone,
+               o.package_type, o.amount, o.status, o.pay_time, o.remark, o.create_time, o.update_time,
+               org.org_name, d.name as deceased_name
+        from mem_order o
+        left join mem_organization org on o.org_id = org.org_id
+        left join mem_deceased d on o.deceased_id = d.deceased_id
+        <where>
+            <if test="orgId != null">
+                and o.org_id = #{orgId}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                and o.order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="customerName != null and customerName != ''">
+                and o.customer_name like concat('%', #{customerName}, '%')
+            </if>
+            <if test="status != null">
+                and o.status = #{status}
+            </if>
+            <if test="packageType != null">
+                and o.package_type = #{packageType}
+            </if>
+        </where>
+        order by o.create_time desc
+    </select>
+
+    <select id="selectOrderById" parameterType="Long" resultMap="BaseResultMap">
+        select o.order_id, o.order_no, o.org_id, o.deceased_id, o.customer_name, o.customer_phone,
+               o.package_type, o.amount, o.status, o.pay_time, o.remark, o.create_time, o.update_time,
+               org.org_name, d.name as deceased_name
+        from mem_order o
+        left join mem_organization org on o.org_id = org.org_id
+        left join mem_deceased d on o.deceased_id = d.deceased_id
+        where o.order_id = #{orderId}
+    </select>
+
+    <select id="selectOrderByNo" parameterType="String" resultMap="BaseResultMap">
+        select o.order_id, o.order_no, o.org_id, o.deceased_id, o.customer_name, o.customer_phone,
+               o.package_type, o.amount, o.status, o.pay_time, o.remark, o.create_time, o.update_time,
+               org.org_name, d.name as deceased_name
+        from mem_order o
+        left join mem_organization org on o.org_id = org.org_id
+        left join mem_deceased d on o.deceased_id = d.deceased_id
+        where o.order_no = #{orderNo}
+    </select>
+
+    <select id="countByOrgId" parameterType="Long" resultType="int">
+        select count(*) from mem_order where org_id = #{orgId}
+    </select>
+
+    <select id="sumAmountByOrgId" parameterType="Long" resultType="java.math.BigDecimal">
+        select sum(amount) from mem_order where org_id = #{orgId} and status = 1
+    </select>
+
+    <insert id="insertOrder" parameterType="MemOrder" useGeneratedKeys="true" keyProperty="orderId">
+        insert into mem_order (order_no, org_id, deceased_id, customer_name, customer_phone,
+            package_type, amount, status, pay_time, remark, create_time)
+        values (#{orderNo}, #{orgId}, #{deceasedId}, #{customerName}, #{customerPhone},
+            #{packageType}, #{amount}, #{status}, #{payTime}, #{remark}, #{createTime})
+    </insert>
+
+    <update id="updateOrder" parameterType="MemOrder">
+        update mem_order
+        <set>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="orgId != null">org_id = #{orgId},</if>
+            <if test="deceasedId != null">deceased_id = #{deceasedId},</if>
+            <if test="customerName != null">customer_name = #{customerName},</if>
+            <if test="customerPhone != null">customer_phone = #{customerPhone},</if>
+            <if test="packageType != null">package_type = #{packageType},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        where order_id = #{orderId}
+    </update>
+
+    <delete id="deleteOrderById" parameterType="Long">
+        delete from mem_order where order_id = #{orderId}
+    </delete>
+
+    <delete id="deleteOrderByIds">
+        delete from mem_order where order_id in
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
+</mapper>

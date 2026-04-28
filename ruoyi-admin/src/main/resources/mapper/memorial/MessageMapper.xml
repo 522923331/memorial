@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.mapper.MessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.domain.Message">
+        <id property="messageId" column="message_id"/>
+        <result property="deceasedId" column="deceased_id"/>
+        <result property="visitorName" column="visitor_name"/>
+        <result property="visitorPhone" column="visitor_phone"/>
+        <result property="relation" column="relation"/>
+        <result property="content" column="content"/>
+        <result property="isAudited" column="is_audited"/>
+        <result property="ipAddress" column="ip_address"/>
+        <result property="deceasedName" column="deceased_name"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectMessageList" parameterType="Message" resultMap="BaseResultMap">
+        select m.message_id, m.deceased_id, m.visitor_name, m.visitor_phone, m.relation, m.content,
+               m.is_audited, m.ip_address, m.create_time, d.name as deceased_name
+        from mem_message m
+        left join mem_deceased d on m.deceased_id = d.deceased_id
+        <where>
+            <if test="deceasedId != null">
+                and m.deceased_id = #{deceasedId}
+            </if>
+            <if test="visitorName != null and visitorName != ''">
+                and m.visitor_name like concat('%', #{visitorName}, '%')
+            </if>
+            <if test="isAudited != null and isAudited != ''">
+                and m.is_audited = #{isAudited}
+            </if>
+        </where>
+        order by m.create_time desc
+    </select>
+
+    <select id="selectMessageById" parameterType="Long" resultMap="BaseResultMap">
+        select m.message_id, m.deceased_id, m.visitor_name, m.visitor_phone, m.relation, m.content,
+               m.is_audited, m.ip_address, m.create_time, d.name as deceased_name
+        from mem_message m
+        left join mem_deceased d on m.deceased_id = d.deceased_id
+        where m.message_id = #{messageId}
+    </select>
+
+    <select id="selectApprovedMessagesByDeceasedId" parameterType="Long" resultMap="BaseResultMap">
+        select m.message_id, m.deceased_id, m.visitor_name, m.visitor_phone, m.relation, m.content,
+               m.is_audited, m.ip_address, m.create_time, d.name as deceased_name
+        from mem_message m
+        left join mem_deceased d on m.deceased_id = d.deceased_id
+        where m.deceased_id = #{deceasedId} and m.is_audited = '1'
+        order by m.create_time desc
+    </select>
+
+    <select id="countByDeceasedId" parameterType="Long" resultType="int">
+        select count(*) from mem_message where deceased_id = #{deceasedId} and is_audited = '1'
+    </select>
+
+    <insert id="insertMessage" parameterType="Message" useGeneratedKeys="true" keyProperty="messageId">
+        insert into mem_message (deceased_id, visitor_name, visitor_phone, relation, content,
+            is_audited, ip_address, create_time)
+        values (#{deceasedId}, #{visitorName}, #{visitorPhone}, #{relation}, #{content},
+            #{isAudited}, #{ipAddress}, #{createTime})
+    </insert>
+
+    <update id="updateMessage" parameterType="Message">
+        update mem_message
+        <set>
+            <if test="visitorName != null">visitor_name = #{visitorName},</if>
+            <if test="visitorPhone != null">visitor_phone = #{visitorPhone},</if>
+            <if test="relation != null">relation = #{relation},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="isAudited != null">is_audited = #{isAudited},</if>
+        </set>
+        where message_id = #{messageId}
+    </update>
+
+    <update id="batchUpdateStatus">
+        update mem_message set is_audited = #{status} where message_id in
+        <foreach item="messageId" collection="array" open="(" separator="," close=")">
+            #{messageId}
+        </foreach>
+    </update>
+
+    <delete id="deleteMessageById" parameterType="Long">
+        delete from mem_message where message_id = #{messageId}
+    </delete>
+
+    <delete id="deleteMessageByIds">
+        delete from mem_message where message_id in
+        <foreach item="messageId" collection="array" open="(" separator="," close=")">
+            #{messageId}
+        </foreach>
+    </delete>
+
+    <select id="countByOrgId" resultType="java.lang.Long">
+        select count(*) from mem_message m
+        left join mem_deceased d on m.deceased_id = d.deceased_id
+        where d.org_id = #{orgId}
+    </select>
+</mapper>

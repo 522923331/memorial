@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.mapper.StatisticsMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.domain.Statistics">
+        <id property="statId" column="stat_id"/>
+        <result property="deceasedId" column="deceased_id"/>
+        <result property="visitDate" column="visit_date"/>
+        <result property="visitCount" column="visit_count"/>
+        <result property="messageCount" column="message_count"/>
+        <result property="flowerCount" column="flower_count"/>
+        <result property="deceasedName" column="name"/>
+    </resultMap>
+
+    <select id="selectStatisticsList" parameterType="Statistics" resultMap="BaseResultMap">
+        select s.stat_id, s.deceased_id, s.visit_date, s.visit_count, s.message_count, s.flower_count, d.name as deceased_name
+        from mem_statistics s
+        left join mem_deceased d on s.deceased_id = d.deceased_id
+        where 1=1
+        <if test="deceasedId != null">
+            and s.deceased_id = #{deceasedId}
+        </if>
+        order by s.visit_date desc
+    </select>
+
+    <select id="selectStatisticsById" parameterType="Long" resultMap="BaseResultMap">
+        select * from mem_statistics where stat_id = #{statId}
+    </select>
+
+    <select id="selectStatisticsByDeceasedAndDate" resultMap="BaseResultMap">
+        select * from mem_statistics where deceased_id = #{deceasedId} and visit_date = #{visitDate}
+    </select>
+
+    <select id="getTotalVisitByDeceasedId" resultType="java.lang.Integer">
+        select ifnull(sum(visit_count), 0) from mem_statistics where deceased_id = #{deceasedId}
+    </select>
+
+    <select id="getTotalMessageByDeceasedId" resultType="java.lang.Integer">
+        select ifnull(sum(message_count), 0) from mem_statistics where deceased_id = #{deceasedId}
+    </select>
+
+    <select id="getTotalFlowerByDeceasedId" resultType="java.lang.Integer">
+        select ifnull(sum(flower_count), 0) from mem_statistics where deceased_id = #{deceasedId}
+    </select>
+
+    <select id="selectAllDeceasedIds" resultType="java.lang.Long">
+        select distinct deceased_id from mem_statistics
+    </select>
+
+    <insert id="insertStatistics" parameterType="Statistics" useGeneratedKeys="true" keyProperty="statId">
+        insert into mem_statistics (deceased_id, visit_date, visit_count, message_count, flower_count)
+        values (#{deceasedId}, #{visitDate}, #{visitCount}, #{messageCount}, #{flowerCount})
+    </insert>
+
+    <update id="updateStatistics" parameterType="Statistics">
+        update mem_statistics
+        <set>
+            <if test="visitCount != null">visit_count = #{visitCount},</if>
+            <if test="messageCount != null">message_count = #{messageCount},</if>
+            <if test="flowerCount != null">flower_count = #{flowerCount},</if>
+        </set>
+        where stat_id = #{statId}
+    </update>
+
+    <update id="incrementVisitCount">
+        insert into mem_statistics (deceased_id, visit_date, visit_count, message_count, flower_count)
+        values (#{deceasedId}, #{visitDate}, 1, 0, 0)
+        on duplicate key update visit_count = visit_count + 1
+    </update>
+
+    <update id="incrementMessageCount">
+        insert into mem_statistics (deceased_id, visit_date, visit_count, message_count, flower_count)
+        values (#{deceasedId}, #{visitDate}, 0, 1, 0)
+        on duplicate key update message_count = message_count + 1
+    </update>
+
+    <update id="incrementFlowerCount">
+        insert into mem_statistics (deceased_id, visit_date, visit_count, message_count, flower_count)
+        values (#{deceasedId}, #{visitDate}, 0, 0, 1)
+        on duplicate key update flower_count = flower_count + 1
+    </update>
+
+    <delete id="deleteStatisticsById" parameterType="Long">
+        delete from mem_statistics where stat_id = #{statId}
+    </delete>
+
+    <delete id="deleteStatisticsByIds">
+        delete from mem_statistics where stat_id in
+        <foreach item="statId" collection="array" open="(" separator="," close=")">
+            #{statId}
+        </foreach>
+    </delete>
+</mapper>

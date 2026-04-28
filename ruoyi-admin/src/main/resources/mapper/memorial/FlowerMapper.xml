@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.mapper.FlowerMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.domain.Flower">
+        <id property="flowerId" column="flower_id"/>
+        <result property="deceasedId" column="deceased_id"/>
+        <result property="visitorName" column="visitor_name"/>
+        <result property="flowerType" column="flower_type"/>
+        <result property="message" column="message"/>
+        <result property="ipAddress" column="ip_address"/>
+        <result property="deceasedName" column="deceased_name"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectFlowerList" parameterType="Flower" resultMap="BaseResultMap">
+        select f.flower_id, f.deceased_id, f.visitor_name, f.flower_type, f.message,
+               f.ip_address, f.create_time, d.name as deceased_name
+        from mem_flower f
+        left join mem_deceased d on f.deceased_id = d.deceased_id
+        <where>
+            <if test="deceasedId != null">
+                and f.deceased_id = #{deceasedId}
+            </if>
+            <if test="visitorName != null and visitorName != ''">
+                and f.visitor_name like concat('%', #{visitorName}, '%')
+            </if>
+        </where>
+        order by f.create_time desc
+    </select>
+
+    <select id="selectFlowerById" parameterType="Long" resultMap="BaseResultMap">
+        select f.flower_id, f.deceased_id, f.visitor_name, f.flower_type, f.message,
+               f.ip_address, f.create_time, d.name as deceased_name
+        from mem_flower f
+        left join mem_deceased d on f.deceased_id = d.deceased_id
+        where f.flower_id = #{flowerId}
+    </select>
+
+    <select id="selectFlowersByDeceasedId" parameterType="Long" resultMap="BaseResultMap">
+        select f.flower_id, f.deceased_id, f.visitor_name, f.flower_type, f.message,
+               f.ip_address, f.create_time, d.name as deceased_name
+        from mem_flower f
+        left join mem_deceased d on f.deceased_id = d.deceased_id
+        where f.deceased_id = #{deceasedId}
+        order by f.create_time desc
+    </select>
+
+    <select id="countByDeceasedId" parameterType="Long" resultType="int">
+        select count(*) from mem_flower where deceased_id = #{deceasedId}
+    </select>
+
+    <insert id="insertFlower" parameterType="Flower" useGeneratedKeys="true" keyProperty="flowerId">
+        insert into mem_flower (deceased_id, visitor_name, flower_type, message, ip_address, create_time)
+        values (#{deceasedId}, #{visitorName}, #{flowerType}, #{message}, #{ipAddress}, #{createTime})
+    </insert>
+
+    <delete id="deleteFlowerById" parameterType="Long">
+        delete from mem_flower where flower_id = #{flowerId}
+    </delete>
+
+    <delete id="deleteFlowerByIds">
+        delete from mem_flower where flower_id in
+        <foreach item="flowerId" collection="array" open="(" separator="," close=")">
+            #{flowerId}
+        </foreach>
+    </delete>
+
+    <select id="countByOrgId" resultType="java.lang.Long">
+        select count(*) from mem_flower f
+        left join mem_deceased d on f.deceased_id = d.deceased_id
+        where d.org_id = #{orgId}
+    </select>
+</mapper>

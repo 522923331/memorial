@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.mapper.DeceasedMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.domain.Deceased">
+        <id property="deceasedId" column="deceased_id"/>
+        <result property="orgId" column="org_id"/>
+        <result property="familyUserId" column="family_user_id"/>
+        <result property="name" column="name"/>
+        <result property="gender" column="gender"/>
+        <result property="birthDate" column="birth_date"/>
+        <result property="deathDate" column="death_date"/>
+        <result property="cemeteryArea" column="cemetery_area"/>
+        <result property="cemeteryNumber" column="cemetery_number"/>
+        <result property="bio" column="bio"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="qrcodeCode" column="qrcode_code"/>
+        <result property="qrcodeUrl" column="qrcode_url"/>
+        <result property="isPublic" column="is_public"/>
+        <result property="allowMessage" column="allow_message"/>
+        <result property="messageAudit" column="message_audit"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="remark" column="remark"/>
+        <result property="orgName" column="org_name"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectDeceasedList" parameterType="Deceased" resultMap="BaseResultMap">
+        select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
+               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
+               d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
+        from mem_deceased d
+        left join mem_organization o on d.org_id = o.org_id
+        where d.del_flag = '0'
+        <if test="name != null and name != ''">
+            and d.name like concat('%', #{name}, '%')
+        </if>
+        <if test="orgId != null">
+            and d.org_id = #{orgId}
+        </if>
+        <if test="familyUserId != null">
+            and d.family_user_id = #{familyUserId}
+        </if>
+        <if test="qrcodeCode != null and qrcodeCode != ''">
+            and d.qrcode_code = #{qrcodeCode}
+        </if>
+        <if test="status != null and status != ''">
+            and d.status = #{status}
+        </if>
+        order by d.create_time desc
+    </select>
+
+    <select id="selectDeceasedById" parameterType="Long" resultMap="BaseResultMap">
+        select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
+               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
+               d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
+        from mem_deceased d
+        left join mem_organization o on d.org_id = o.org_id
+        where d.deceased_id = #{deceasedId} and d.del_flag = '0'
+    </select>
+
+    <select id="selectDeceasedByQrcode" parameterType="String" resultMap="BaseResultMap">
+        select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
+               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
+               d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
+        from mem_deceased d
+        left join mem_organization o on d.org_id = o.org_id
+        where d.qrcode_code = #{qrcodeCode} and d.del_flag = '0'
+    </select>
+
+    <select id="selectDeceasedByFamilyId" parameterType="Long" resultMap="BaseResultMap">
+        select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
+               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
+               d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
+        from mem_deceased d
+        left join mem_organization o on d.org_id = o.org_id
+        where d.family_user_id = #{familyUserId} and d.del_flag = '0'
+        order by d.create_time desc
+    </select>
+
+    <select id="countByOrgId" parameterType="Long" resultType="int">
+        select count(*) from mem_deceased where org_id = #{orgId} and del_flag = '0'
+    </select>
+
+    <update id="incrementVisit" parameterType="Long">
+        -- 这里如果需要可以增加访问计数字段，暂时先留空，实际统计通过统计表获取
+        select 1
+    </update>
+
+    <insert id="insertDeceased" parameterType="Deceased" useGeneratedKeys="true" keyProperty="deceasedId">
+        insert into mem_deceased (org_id, family_user_id, name, gender, birth_date, death_date,
+            cemetery_area, cemetery_number, bio, cover_image, qrcode_code, qrcode_url, is_public,
+            allow_message, message_audit, status, del_flag, remark, create_by, create_time)
+        values (#{orgId}, #{familyUserId}, #{name}, #{gender}, #{birthDate}, #{deathDate},
+            #{cemeteryArea}, #{cemeteryNumber}, #{bio}, #{coverImage}, #{qrcodeCode}, #{qrcodeUrl}, #{isPublic},
+            #{allowMessage}, #{messageAudit}, #{status}, #{delFlag}, #{remark}, #{createBy}, #{createTime})
+    </insert>
+
+    <update id="updateDeceased" parameterType="Deceased">
+        update mem_deceased
+        <set>
+            <if test="orgId != null">org_id = #{orgId},</if>
+            <if test="familyUserId != null">family_user_id = #{familyUserId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="birthDate != null">birth_date = #{birthDate},</if>
+            <if test="deathDate != null">death_date = #{deathDate},</if>
+            <if test="cemeteryArea != null">cemetery_area = #{cemeteryArea},</if>
+            <if test="cemeteryNumber != null">cemetery_number = #{cemeteryNumber},</if>
+            <if test="bio != null">bio = #{bio},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="qrcodeCode != null">qrcode_code = #{qrcodeCode},</if>
+            <if test="qrcodeUrl != null">qrcode_url = #{qrcodeUrl},</if>
+            <if test="isPublic != null">is_public = #{isPublic},</if>
+            <if test="allowMessage != null">allow_message = #{allowMessage},</if>
+            <if test="messageAudit != null">message_audit = #{messageAudit},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        where deceased_id = #{deceasedId} and del_flag = '0'
+    </update>
+
+    <delete id="deleteDeceasedById" parameterType="Long">
+        update mem_deceased set del_flag = '2' where deceased_id = #{deceasedId}
+    </delete>
+
+    <delete id="deleteDeceasedByIds">
+        update mem_deceased set del_flag = '2' where deceased_id in
+        <foreach item="deceasedId" collection="array" open="(" separator="," close=")">
+            #{deceasedId}
+        </foreach>
+    </delete>
+</mapper>

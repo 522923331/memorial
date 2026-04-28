@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.mapper.DeceasedAlbumMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.domain.DeceasedAlbum">
+        <id property="albumId" column="album_id"/>
+        <result property="deceasedId" column="deceased_id"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="thumbnailUrl" column="thumbnail_url"/>
+        <result property="description" column="description"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectAlbumByDeceasedId" parameterType="Long" resultMap="BaseResultMap">
+        select album_id, deceased_id, image_url, thumbnail_url, description, sort_order, create_time
+        from mem_deceased_album
+        where deceased_id = #{deceasedId}
+        order by sort_order asc, create_time asc
+    </select>
+
+    <select id="selectAlbumById" parameterType="Long" resultMap="BaseResultMap">
+        select album_id, deceased_id, image_url, thumbnail_url, description, sort_order, create_time
+        from mem_deceased_album
+        where album_id = #{albumId}
+    </select>
+
+    <insert id="insertAlbum" parameterType="DeceasedAlbum" useGeneratedKeys="true" keyProperty="albumId">
+        insert into mem_deceased_album (deceased_id, image_url, thumbnail_url, description, sort_order, create_time)
+        values (#{deceasedId}, #{imageUrl}, #{thumbnailUrl}, #{description}, #{sortOrder}, #{createTime})
+    </insert>
+
+    <insert id="batchInsertAlbum" parameterType="java.util.List">
+        insert into mem_deceased_album (deceased_id, image_url, thumbnail_url, description, sort_order, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.deceasedId}, #{item.imageUrl}, #{item.thumbnailUrl}, #{item.description}, #{item.sortOrder}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <update id="updateAlbum" parameterType="DeceasedAlbum">
+        update mem_deceased_album
+        <set>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="thumbnailUrl != null">thumbnail_url = #{thumbnailUrl},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+        </set>
+        where album_id = #{albumId}
+    </update>
+
+    <delete id="deleteAlbumById" parameterType="Long">
+        delete from mem_deceased_album where album_id = #{albumId}
+    </delete>
+
+    <delete id="deleteAlbumByIds">
+        delete from mem_deceased_album where album_id in
+        <foreach item="albumId" collection="array" open="(" separator="," close=")">
+            #{albumId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteAlbumByDeceasedId" parameterType="Long">
+        delete from mem_deceased_album where deceased_id = #{deceasedId}
+    </delete>
+</mapper>

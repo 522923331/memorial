@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.mapper.DeceasedVideoMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.domain.DeceasedVideo">
+        <id property="videoId" column="video_id"/>
+        <result property="deceasedId" column="deceased_id"/>
+        <result property="title" column="title"/>
+        <result property="videoUrl" column="video_url"/>
+        <result property="coverUrl" column="cover_url"/>
+        <result property="description" column="description"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectDeceasedVideoList" parameterType="DeceasedVideo" resultMap="BaseResultMap">
+        select * from mem_deceased_video
+        where 1=1
+        <if test="deceasedId != null">
+            and deceased_id = #{deceasedId}
+        </if>
+        <if test="title != null and title != ''">
+            and title like concat('%', #{title}, '%')
+        </if>
+        order by sort_order asc, create_time desc
+    </select>
+
+    <select id="selectDeceasedVideoById" parameterType="Long" resultMap="BaseResultMap">
+        select * from mem_deceased_video where video_id = #{videoId}
+    </select>
+
+    <select id="selectDeceasedVideoByDeceasedId" parameterType="Long" resultMap="BaseResultMap">
+        select * from mem_deceased_video where deceased_id = #{deceasedId}
+        order by sort_order asc, create_time desc
+    </select>
+
+    <select id="countByDeceasedId" parameterType="Long" resultType="int">
+        select count(*) from mem_deceased_video where deceased_id = #{deceasedId}
+    </select>
+
+    <insert id="insertDeceasedVideo" parameterType="DeceasedVideo" useGeneratedKeys="true" keyProperty="videoId">
+        insert into mem_deceased_video (deceased_id, title, video_url, cover_url, description, sort_order, create_time)
+        values (#{deceasedId}, #{title}, #{videoUrl}, #{coverUrl}, #{description}, #{sortOrder}, #{createTime})
+    </insert>
+
+    <update id="updateDeceasedVideo" parameterType="DeceasedVideo">
+        update mem_deceased_video
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="coverUrl != null">cover_url = #{coverUrl},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+        </set>
+        where video_id = #{videoId}
+    </update>
+
+    <delete id="deleteDeceasedVideoById" parameterType="Long">
+        delete from mem_deceased_video where video_id = #{videoId}
+    </delete>
+
+    <delete id="deleteDeceasedVideoByIds">
+        delete from mem_deceased_video where video_id in
+        <foreach item="videoId" collection="array" open="(" separator="," close=")">
+            #{videoId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteDeceasedVideoByDeceasedId" parameterType="Long">
+        delete from mem_deceased_video where deceased_id = #{deceasedId}
+    </delete>
+</mapper>
