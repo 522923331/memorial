@@ -1,5 +1,6 @@
 <template>
   <view class="page">
+    <NavBar title="纪念视频" :show-back="true" @back="goBack" />
     <view v-if="videos.length === 0" class="empty-tip">
       <text>暂无视频</text>
     </view>
@@ -21,19 +22,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useMemorialStore } from '@/stores/memorial'
+import NavBar from '@/components/NavBar.vue'
 
 const memorialStore = useMemorialStore()
 const videos = computed(() => memorialStore.videos)
+
+function goBack() {
+  uni.navigateBack({ delta: 1 })
+}
 </script>
 
 <style scoped>
 .page {
   min-height: 100vh;
   background: #f5f5f5;
-  padding: 20rpx;
 }
 
 .video-list {
+  padding: 20rpx;
   display: flex;
   flex-direction: column;
   gap: 20rpx;

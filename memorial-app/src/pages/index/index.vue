@@ -1,14 +1,10 @@
 <template>
   <view class="page">
     <!-- 自定义导航栏 -->
-    <view class="nav-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
-      <view class="nav-bar-content">
-        <text class="nav-title">云上纪念</text>
-      </view>
-    </view>
+    <NavBar title="云上纪念" :show-back="false" />
 
     <!-- 搜索栏 -->
-    <view class="search-section" :style="{ marginTop: (statusBarHeight + 44) + 'px' }">
+    <view class="search-section">
       <view class="search-bar">
         <uni-icons type="search" size="18" color="#999" />
         <input
@@ -93,19 +89,15 @@ import { onShow } from '@dcloudio/uni-app'
 import { searchDeceased } from '@/api/memorial'
 import { useMemorialStore } from '@/stores/memorial'
 import { parseQrCode } from '@/utils/qrcode'
+import NavBar from '@/components/NavBar.vue'
 import type { Deceased } from '@/types/memorial'
 
 const memorialStore = useMemorialStore()
 
-const statusBarHeight = ref(0)
 const keyword = ref('')
 const searchResults = ref<Deceased[]>([])
 const recentVisits = computed(() => memorialStore.recentVisits)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
-
-// 获取状态栏高度
-const sysInfo = uni.getSystemInfoSync()
-statusBarHeight.value = sysInfo.statusBarHeight || 0
 
 onShow(() => {
   // 每次显示时刷新最近访问
@@ -201,28 +193,6 @@ function formatTime(timestamp: number): string {
 .page {
   min-height: 100vh;
   background-color: #f5f5f5;
-}
-
-.nav-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: linear-gradient(135deg, #2c3e50, #3a5a7c);
-}
-
-.nav-bar-content {
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #fff;
 }
 
 .search-section {

@@ -1,17 +1,17 @@
 <template>
   <view class="page">
+    <NavBar title="留言寄语" :show-back="true" @back="goBack" />
+
     <!-- 留言列表 -->
     <view class="message-list">
       <view v-if="messages.length === 0" class="empty-tip">
         <text>暂无留言，成为第一个留言的人</text>
       </view>
-      <view v-for="msg in messages" :key="msg.messageId" class="message-item">
-        <view class="message-header">
-          <text class="message-author">{{ msg.visitorName || '匿名' }}</text>
-          <text class="message-time">{{ formatTime(msg.createTime) }}</text>
-        </view>
-        <text class="message-content">{{ msg.content }}</text>
-      </view>
+      <MessageItem
+        v-for="msg in messages"
+        :key="msg.messageId"
+        :message="msg"
+      />
     </view>
 
     <!-- 发表留言 -->
@@ -47,7 +47,8 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useMemorialStore } from '@/stores/memorial'
 import { useUserStore } from '@/stores/user'
-import { getMessages } from '@/api/memorial'
+import NavBar from '@/components/NavBar.vue'
+import MessageItem from '@/components/MessageItem.vue'
 
 const memorialStore = useMemorialStore()
 const userStore = useUserStore()
@@ -65,6 +66,10 @@ onLoad((options) => {
   memorialStore.loadMessages()
 })
 
+function goBack() {
+  uni.navigateBack({ delta: 1 })
+}
+
 async function handleSubmit() {
   if (!content.value.trim()) return
   try {
@@ -74,12 +79,6 @@ async function handleSubmit() {
   } catch {
     // 错误由 request 拦截器处理
   }
-}
-
-function formatTime(timeStr: string): string {
-  if (!timeStr) return ''
-  const d = new Date(timeStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 </script>
 
@@ -92,37 +91,6 @@ function formatTime(timeStr: string): string {
 
 .message-list {
   padding: 20rpx 30rpx;
-}
-
-.message-item {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12rpx;
-}
-
-.message-author {
-  font-size: 28rpx;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.message-time {
-  font-size: 22rpx;
-  color: #ccc;
-}
-
-.message-content {
-  font-size: 28rpx;
-  color: #555;
-  line-height: 1.7;
 }
 
 .empty-tip {

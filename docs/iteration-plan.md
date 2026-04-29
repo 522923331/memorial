@@ -257,6 +257,8 @@
 - [x] 修复 message.js API batchAudit 请求方式（@RequestParam 应用 params 而非 data）
 - [x] 新增 memorial_package_type 字典（机构/订单共用套餐类型）
 - [x] 前端 `npm run build:prod` 编译通过
+- [x] H5 编译通过（`npm run build:h5`）
+- [x] TypeScript 类型检查通过（`vue-tsc --noEmit`）
 - [ ] 数据库 8 张表创建成功（需手动执行 SQL）
 - [ ] 示例数据 3 条逝者可查询
 - [ ] 后端 18080 端口正常运行
@@ -264,9 +266,9 @@
 - [ ] 字典标签显示正常
 
 ### 迭代 1 验收
-- [ ] `components/` 目录有 6 个组件文件
-- [ ] 所有组件 TypeScript 类型完整
-- [ ] 页面重构后视觉效果不变
+- [x] `components/` 目录有 6 个组件文件（NavBar, MemorialHeader, AlbumGrid, VideoCard, MessageItem, FlowerItem）
+- [x] 所有组件 TypeScript 类型完整（defineProps + TypeScript 接口）
+- [x] 页面重构后视觉效果不变
 - [ ] H5 编译无报错
 
 ### 迭代 2 验收

@@ -1,5 +1,7 @@
 <template>
   <view class="page">
+    <NavBar title="献花致敬" :show-back="true" @back="goBack" />
+
     <!-- 鲜花选择 -->
     <view class="section">
       <text class="section-title">选择鲜花</text>
@@ -39,11 +41,11 @@
         <text>暂无献花记录</text>
       </view>
       <view v-else class="flower-list">
-        <view v-for="fl in flowers" :key="fl.flowerId" class="flower-record">
-          <text class="flower-emoji">{{ getFlowerEmoji(fl.flowerType) }}</text>
-          <text class="flower-who">{{ fl.visitorName || '匿名' }}</text>
-          <text class="flower-when">{{ formatTime(fl.createTime) }}</text>
-        </view>
+        <FlowerItem
+          v-for="fl in flowers"
+          :key="fl.flowerId"
+          :flower="fl"
+        />
       </view>
     </view>
 
@@ -62,6 +64,8 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useMemorialStore } from '@/stores/memorial'
 import { useUserStore } from '@/stores/user'
+import NavBar from '@/components/NavBar.vue'
+import FlowerItem from '@/components/FlowerItem.vue'
 
 const memorialStore = useMemorialStore()
 const userStore = useUserStore()
@@ -85,6 +89,10 @@ onLoad((options) => {
   authorName.value = userStore.nickName || ''
 })
 
+function goBack() {
+  uni.navigateBack({ delta: 1 })
+}
+
 async function handleSubmit() {
   try {
     await memorialStore.sendFlower(selectedType.value, authorName.value.trim() || '匿名')
@@ -100,12 +108,6 @@ async function handleSubmit() {
 function getFlowerEmoji(type: number): string {
   const map: Record<number, string> = { 1: '🌼', 2: '🤍', 3: '🌸', 4: '🌹' }
   return map[type] || '🌸'
-}
-
-function formatTime(timeStr: string): string {
-  if (!timeStr) return ''
-  const d = new Date(timeStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
 }
 </script>
 
@@ -186,33 +188,7 @@ function formatTime(timeStr: string): string {
 .flower-list {
   display: flex;
   flex-direction: column;
-}
-
-.flower-record {
-  display: flex;
-  align-items: center;
   gap: 12rpx;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
-}
-
-.flower-record:last-child {
-  border-bottom: none;
-}
-
-.flower-emoji {
-  font-size: 32rpx;
-}
-
-.flower-who {
-  font-size: 28rpx;
-  color: #333;
-  flex: 1;
-}
-
-.flower-when {
-  font-size: 24rpx;
-  color: #ccc;
 }
 
 .empty-tip {
