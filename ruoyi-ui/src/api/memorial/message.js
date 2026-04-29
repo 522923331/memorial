@@ -27,11 +27,11 @@ export function auditMessage(data) {
 }
 
 // 批量审核留言
-export function batchAuditMessage(data) {
+export function batchAuditMessage(params) {
   return request({
     url: '/memorial/message/batchAudit',
     method: 'put',
-    data: data
+    params: params
   })
 }
 

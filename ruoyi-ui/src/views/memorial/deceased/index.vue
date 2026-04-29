@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="逝者姓名" prop="deceasedName">
+      <el-form-item label="逝者姓名" prop="name">
         <el-input
-          v-model="queryParams.deceasedName"
+          v-model="queryParams.name"
           placeholder="请输入逝者姓名"
           clearable
           @keyup.enter.native="handleQuery"
@@ -84,8 +84,8 @@
 
     <el-table v-loading="loading" :data="deceasedList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="序号" align="center" prop="deceasedId" width="100" />
-      <el-table-column label="逝者姓名" align="center" prop="deceasedName" :show-overflow-tooltip="true" />
+      <el-table-column label="序号" align="center" prop="deceasedId" width="80" />
+      <el-table-column label="逝者姓名" align="center" prop="name" :show-overflow-tooltip="true" />
       <el-table-column label="性别" align="center" prop="gender" width="80">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.sys_user_sex" :value="scope.row.gender"/>
@@ -96,14 +96,13 @@
           <span>{{ parseTime(scope.row.birthDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="死亡日期" align="center" prop="deathDate" width="120">
+      <el-table-column label="逝世日期" align="center" prop="deathDate" width="120">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.deathDate, '{y}-{m}-{d}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="家属用户ID" align="center" prop="familyUserId" width="100" />
-      <el-table-column label="纪念标题" align="center" prop="memorialTitle" width="150" :show-overflow-tooltip="true" />
-      <el-table-column label="机构ID" align="center" prop="orgId" width="100" />
+      <el-table-column label="墓位编号" align="center" prop="cemeteryNumber" width="120" />
+      <el-table-column label="所属机构" align="center" prop="orgName" width="140" :show-overflow-tooltip="true" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
@@ -148,8 +147,8 @@
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="12">
-            <el-form-item label="逝者姓名" prop="deceasedName">
-              <el-input v-model="form.deceasedName" placeholder="请输入逝者姓名" />
+            <el-form-item label="逝者姓名" prop="name">
+              <el-input v-model="form.name" placeholder="请输入逝者姓名" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -170,8 +169,23 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="死亡日期" prop="deathDate">
-              <el-date-picker v-model="form.deathDate" value-format="yyyy-MM-dd" type="date" placeholder="选择死亡日期" style="width: 100%"></el-date-picker>
+            <el-form-item label="逝世日期" prop="deathDate">
+              <el-date-picker v-model="form.deathDate" value-format="yyyy-MM-dd" type="date" placeholder="选择逝世日期" style="width: 100%"></el-date-picker>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="陵园区域" prop="cemeteryArea">
+              <el-input v-model="form.cemeteryArea" placeholder="请输入陵园区域" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="墓位编号" prop="cemeteryNumber">
+              <el-input v-model="form.cemeteryNumber" placeholder="请输入墓位编号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="所属机构" prop="orgId">
+              <el-input v-model="form.orgId" placeholder="请输入机构ID" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -179,19 +193,33 @@
               <el-input v-model="form.familyUserId" placeholder="请输入家属用户ID" />
             </el-form-item>
           </el-col>
+          <el-col :span="24">
+            <el-form-item label="生平简介" prop="bio">
+              <editor v-model="form.bio" :min-height="192"/>
+            </el-form-item>
+          </el-col>
           <el-col :span="12">
-            <el-form-item label="机构ID" prop="orgId">
-              <el-input v-model="form.orgId" placeholder="请输入机构ID" />
+            <el-form-item label="是否公开" prop="isPublic">
+              <el-radio-group v-model="form.isPublic">
+                <el-radio label="0">公开</el-radio>
+                <el-radio label="1">不公开</el-radio>
+              </el-radio-group>
             </el-form-item>
           </el-col>
-          <el-col :span="24">
-            <el-form-item label="纪念标题" prop="memorialTitle">
-              <el-input v-model="form.memorialTitle" placeholder="请输入纪念标题" />
+          <el-col :span="12">
+            <el-form-item label="允许留言" prop="allowMessage">
+              <el-radio-group v-model="form.allowMessage">
+                <el-radio label="0">允许</el-radio>
+                <el-radio label="1">不允许</el-radio>
+              </el-radio-group>
             </el-form-item>
           </el-col>
-          <el-col :span="24">
-            <el-form-item label="纪念内容" prop="memorialContent">
-              <editor v-model="form.memorialContent" :min-height="192"/>
+          <el-col :span="12">
+            <el-form-item label="留言审核" prop="messageAudit">
+              <el-radio-group v-model="form.messageAudit">
+                <el-radio label="0">不需审核</el-radio>
+                <el-radio label="1">需审核</el-radio>
+              </el-radio-group>
             </el-form-item>
           </el-col>
         </el-row>
@@ -212,6 +240,7 @@
         list-type="picture-card"
         :file-list="albumFileList"
         :before-upload="beforeAlbumUpload"
+        :data="{deceasedId: albumDeceasedId}"
         accept=".jpg,.jpeg,.png,.gif"
       >
         <i class="el-icon-plus"></i>
@@ -222,13 +251,14 @@
             <template slot-scope="scope">
               <el-image
                 style="width: 60px; height: 60px"
-                :src="scope.row.url"
-                :preview-src-list="[scope.row.url]"
+                :src="scope.row.imageUrl"
+                :preview-src-list="[scope.row.imageUrl]"
                 fit="cover"
               ></el-image>
             </template>
           </el-table-column>
-          <el-table-column label="文件名" prop="fileName" :show-overflow-tooltip="true" />
+          <el-table-column label="描述" prop="description" :show-overflow-tooltip="true" />
+          <el-table-column label="排序" prop="sortOrder" width="80" align="center" />
           <el-table-column label="上传时间" prop="createTime" width="160" align="center">
             <template slot-scope="scope">
               <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
@@ -274,12 +304,12 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        deceasedName: undefined,
+        name: undefined,
         gender: undefined
       },
       form: {},
       rules: {
-        deceasedName: [
+        name: [
           { required: true, message: "逝者姓名不能为空", trigger: "blur" }
         ],
         gender: [
@@ -289,7 +319,7 @@ export default {
           { required: true, message: "出生日期不能为空", trigger: "change" }
         ],
         deathDate: [
-          { required: true, message: "死亡日期不能为空", trigger: "change" }
+          { required: true, message: "逝世日期不能为空", trigger: "change" }
         ],
         familyUserId: [
           { required: true, message: "家属用户ID不能为空", trigger: "blur" }
@@ -323,14 +353,18 @@ export default {
     reset() {
       this.form = {
         deceasedId: undefined,
-        deceasedName: undefined,
+        name: undefined,
         gender: undefined,
         birthDate: undefined,
         deathDate: undefined,
-        familyUserId: undefined,
+        cemeteryArea: undefined,
+        cemeteryNumber: undefined,
         orgId: undefined,
-        memorialTitle: undefined,
-        memorialContent: undefined
+        familyUserId: undefined,
+        bio: undefined,
+        isPublic: '0',
+        allowMessage: '0',
+        messageAudit: '0'
       }
       this.resetForm("form")
     },
@@ -403,8 +437,8 @@ export default {
         const albums = response.data.albums || []
         this.albumList = albums
         this.albumFileList = albums.map(item => ({
-          name: item.fileName,
-          url: item.url
+          name: item.description || '',
+          url: item.imageUrl
         }))
         this.albumLoading = false
       }).catch(() => {

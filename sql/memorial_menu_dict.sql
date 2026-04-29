@@ -113,6 +113,8 @@ insert into sys_dict_type (dict_id, dict_name, dict_type, status, create_by, cre
 values (104, '鲜花类型',   'memorial_flower_type',  '0', 'admin', sysdate(), '', null, '献花鲜花类型列表');
 insert into sys_dict_type (dict_id, dict_name, dict_type, status, create_by, create_time, update_by, update_time, remark)
 values (105, '机构类型',   'memorial_org_type',     '0', 'admin', sysdate(), '', null, '纪念机构类型列表');
+insert into sys_dict_type (dict_id, dict_name, dict_type, status, create_by, create_time, update_by, update_time, remark)
+values (106, '套餐类型',   'memorial_package_type', '0', 'admin', sysdate(), '', null, '纪念套餐类型列表');
 
 -- ----------------------------
 -- 3. 字典数据 (sys_dict_data)
@@ -171,3 +173,11 @@ insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_ty
 values (119, 3, '骨灰堂', '3', 'memorial_org_type', '', 'info',    'N', '0', 'admin', sysdate(), '', null, '骨灰堂');
 insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
 values (120, 4, '纪念馆', '4', 'memorial_org_type', '', 'success', 'N', '0', 'admin', sysdate(), '', null, '纪念馆');
+
+-- 套餐类型 memorial_package_type（机构/订单共用）
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (121, 1, '基础套餐', '0', 'memorial_package_type', '', 'default', 'Y', '0', 'admin', sysdate(), '', null, '基础套餐');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (122, 2, '高级套餐', '1', 'memorial_package_type', '', 'primary', 'N', '0', 'admin', sysdate(), '', null, '高级套餐');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (123, 3, 'VIP套餐',  '2', 'memorial_package_type', '', 'warning', 'N', '0', 'admin', sysdate(), '', null, 'VIP套餐');

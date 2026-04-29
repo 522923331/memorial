@@ -1,16 +1,16 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="留言人" prop="authorName">
+      <el-form-item label="留言人" prop="visitorName">
         <el-input
-          v-model="queryParams.authorName"
+          v-model="queryParams.visitorName"
           placeholder="请输入留言人"
           clearable
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="审核状态" prop="auditStatus">
-        <el-select v-model="queryParams.auditStatus" placeholder="审核状态" clearable>
+      <el-form-item label="审核状态" prop="isAudited">
+        <el-select v-model="queryParams.isAudited" placeholder="审核状态" clearable>
           <el-option
             v-for="dict in dict.type.memorial_audit_status"
             :key="dict.value"
@@ -72,12 +72,13 @@
     <el-table v-loading="loading" :data="messageList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="messageId" width="80" />
-      <el-table-column label="逝者ID" align="center" prop="deceasedId" width="100" />
+      <el-table-column label="逝者" align="center" prop="deceasedName" width="120" :show-overflow-tooltip="true" />
+      <el-table-column label="留言人" align="center" prop="visitorName" width="120" />
+      <el-table-column label="与逝者关系" align="center" prop="relation" width="100" />
       <el-table-column label="留言内容" align="center" prop="content" :show-overflow-tooltip="true" />
-      <el-table-column label="留言人" align="center" prop="authorName" width="120" />
-      <el-table-column label="审核状态" align="center" prop="auditStatus" width="100">
+      <el-table-column label="审核状态" align="center" prop="isAudited" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.memorial_audit_status" :value="scope.row.auditStatus"/>
+          <dict-tag :options="dict.type.memorial_audit_status" :value="scope.row.isAudited"/>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
@@ -119,8 +120,8 @@
         <el-form-item label="留言内容" v-if="auditForm.content">
           <el-input type="textarea" v-model="auditForm.content" :rows="4" readonly />
         </el-form-item>
-        <el-form-item label="审核状态" prop="auditStatus">
-          <el-radio-group v-model="auditForm.auditStatus">
+        <el-form-item label="审核状态" prop="isAudited">
+          <el-radio-group v-model="auditForm.isAudited">
             <el-radio
               v-for="dict in dict.type.memorial_audit_status"
               :key="dict.value"
@@ -154,7 +155,7 @@ export default {
       auditOpen: false,
       auditForm: {},
       auditRules: {
-        auditStatus: [
+        isAudited: [
           { required: true, message: "请选择审核状态", trigger: "change" }
         ]
       },
@@ -162,8 +163,8 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        authorName: undefined,
-        auditStatus: undefined,
+        visitorName: undefined,
+        isAudited: undefined,
         deceasedId: undefined
       }
     }
@@ -197,7 +198,7 @@ export default {
       this.auditForm = {
         messageId: row.messageId,
         content: row.content,
-        auditStatus: undefined
+        isAudited: undefined
       }
       this.auditOpen = true
       this.$nextTick(() => {
@@ -208,7 +209,7 @@ export default {
       this.isBatchAudit = true
       this.auditForm = {
         content: undefined,
-        auditStatus: undefined
+        isAudited: undefined
       }
       this.auditOpen = true
       this.$nextTick(() => {
@@ -219,13 +220,13 @@ export default {
       this.$refs["auditForm"].validate(valid => {
         if (valid) {
           if (this.isBatchAudit) {
-            batchAuditMessage({ messageIds: this.ids, auditStatus: this.auditForm.auditStatus }).then(response => {
+            batchAuditMessage({ messageIds: this.ids, status: this.auditForm.isAudited }).then(response => {
               this.$modal.msgSuccess("批量审核成功")
               this.auditOpen = false
               this.getList()
             })
           } else {
-            auditMessage({ messageId: this.auditForm.messageId, auditStatus: this.auditForm.auditStatus }).then(response => {
+            auditMessage({ messageId: this.auditForm.messageId, isAudited: this.auditForm.isAudited }).then(response => {
               this.$modal.msgSuccess("审核成功")
               this.auditOpen = false
               this.getList()

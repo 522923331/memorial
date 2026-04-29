@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="献花人" prop="authorName">
+      <el-form-item label="献花人" prop="visitorName">
         <el-input
-          v-model="queryParams.authorName"
+          v-model="queryParams.visitorName"
           placeholder="请输入献花人"
           clearable
           @keyup.enter.native="handleQuery"
@@ -61,13 +61,14 @@
     <el-table v-loading="loading" :data="flowerList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="flowerId" width="80" />
-      <el-table-column label="逝者ID" align="center" prop="deceasedId" width="100" />
+      <el-table-column label="逝者" align="center" prop="deceasedName" width="120" :show-overflow-tooltip="true" />
+      <el-table-column label="献花人" align="center" prop="visitorName" width="120" />
       <el-table-column label="鲜花类型" align="center" prop="flowerType" width="120">
         <template slot-scope="scope">
           <dict-tag :options="dict.type.memorial_flower_type" :value="scope.row.flowerType"/>
         </template>
       </el-table-column>
-      <el-table-column label="献花人" align="center" prop="authorName" width="120" />
+      <el-table-column label="献花留言" align="center" prop="message" :show-overflow-tooltip="true" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
@@ -113,7 +114,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        authorName: undefined,
+        visitorName: undefined,
         flowerType: undefined,
         deceasedId: undefined
       }

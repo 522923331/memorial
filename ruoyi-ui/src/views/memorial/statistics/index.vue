@@ -33,7 +33,12 @@
     <el-table v-loading="loading" :data="statisticsList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="statId" width="80" />
-      <el-table-column label="逝者ID" align="center" prop="deceasedId" width="100" />
+      <el-table-column label="逝者" align="center" prop="deceasedName" width="140" :show-overflow-tooltip="true" />
+      <el-table-column label="访问日期" align="center" prop="visitDate" width="120">
+        <template slot-scope="scope">
+          <span>{{ parseTime(scope.row.visitDate, '{y}-{m}-{d}') }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="访问次数" align="center" prop="visitCount" width="100" />
       <el-table-column label="留言数" align="center" prop="messageCount" width="100" />
       <el-table-column label="献花数" align="center" prop="flowerCount" width="100" />
@@ -67,7 +72,8 @@
     <!-- 统计详情对话框 -->
     <el-dialog title="统计详情" :visible.sync="detailOpen" width="500px" append-to-body>
       <el-descriptions :column="1" border>
-        <el-descriptions-item label="逝者ID">{{ detailData.deceasedId }}</el-descriptions-item>
+        <el-descriptions-item label="逝者">{{ detailData.deceasedName }}</el-descriptions-item>
+        <el-descriptions-item label="访问日期">{{ parseTime(detailData.visitDate, '{y}-{m}-{d}') }}</el-descriptions-item>
         <el-descriptions-item label="访问次数">{{ detailData.visitCount }}</el-descriptions-item>
         <el-descriptions-item label="留言数">{{ detailData.messageCount }}</el-descriptions-item>
         <el-descriptions-item label="献花数">{{ detailData.flowerCount }}</el-descriptions-item>

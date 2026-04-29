@@ -9,28 +9,18 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="订单类型" prop="orderType">
-        <el-select v-model="queryParams.orderType" placeholder="订单类型" clearable>
+      <el-form-item label="套餐类型" prop="packageType">
+        <el-select v-model="queryParams.packageType" placeholder="套餐类型" clearable>
           <el-option
-            v-for="dict in dict.type.memorial_order_type"
+            v-for="dict in dict.type.memorial_package_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="支付状态" prop="payStatus">
-        <el-select v-model="queryParams.payStatus" placeholder="支付状态" clearable>
-          <el-option
-            v-for="dict in dict.type.memorial_pay_status"
-            :key="dict.value"
-            :label="dict.label"
-            :value="dict.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="订单状态" prop="orderStatus">
-        <el-select v-model="queryParams.orderStatus" placeholder="订单状态" clearable>
+      <el-form-item label="订单状态" prop="status">
+        <el-select v-model="queryParams.status" placeholder="订单状态" clearable>
           <el-option
             v-for="dict in dict.type.memorial_order_status"
             :key="dict.value"
@@ -106,21 +96,18 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="orderId" width="80" />
       <el-table-column label="订单编号" align="center" prop="orderNo" width="160" :show-overflow-tooltip="true" />
-      <el-table-column label="逝者ID" align="center" prop="deceasedId" width="100" />
-      <el-table-column label="订单类型" align="center" prop="orderType" width="100">
+      <el-table-column label="逝者" align="center" prop="deceasedName" width="120" :show-overflow-tooltip="true" />
+      <el-table-column label="所属机构" align="center" prop="orgName" width="140" :show-overflow-tooltip="true" />
+      <el-table-column label="客户姓名" align="center" prop="customerName" width="120" />
+      <el-table-column label="套餐类型" align="center" prop="packageType" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.memorial_order_type" :value="scope.row.orderType"/>
+          <dict-tag :options="dict.type.memorial_package_type" :value="scope.row.packageType"/>
         </template>
       </el-table-column>
       <el-table-column label="金额" align="center" prop="amount" width="100" />
-      <el-table-column label="支付状态" align="center" prop="payStatus" width="100">
+      <el-table-column label="订单状态" align="center" prop="status" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.memorial_pay_status" :value="scope.row.payStatus"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="订单状态" align="center" prop="orderStatus" width="100">
-        <template slot-scope="scope">
-          <dict-tag :options="dict.type.memorial_order_status" :value="scope.row.orderStatus"/>
+          <dict-tag :options="dict.type.memorial_order_status" :value="scope.row.status"/>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
@@ -162,37 +149,37 @@
         <el-form-item label="订单编号" prop="orderNo">
           <el-input v-model="form.orderNo" placeholder="请输入订单编号" />
         </el-form-item>
+        <el-form-item label="所属机构" prop="orgId">
+          <el-input v-model="form.orgId" placeholder="请输入机构ID" />
+        </el-form-item>
         <el-form-item label="逝者ID" prop="deceasedId">
           <el-input v-model="form.deceasedId" placeholder="请输入逝者ID" />
         </el-form-item>
-        <el-form-item label="订单类型" prop="orderType">
-          <el-select v-model="form.orderType" placeholder="请选择订单类型">
+        <el-form-item label="客户姓名" prop="customerName">
+          <el-input v-model="form.customerName" placeholder="请输入客户姓名" />
+        </el-form-item>
+        <el-form-item label="客户电话" prop="customerPhone">
+          <el-input v-model="form.customerPhone" placeholder="请输入客户电话" />
+        </el-form-item>
+        <el-form-item label="套餐类型" prop="packageType">
+          <el-select v-model="form.packageType" placeholder="请选择套餐类型">
             <el-option
-              v-for="dict in dict.type.memorial_order_type"
+              v-for="dict in dict.type.memorial_package_type"
               :key="dict.value"
               :label="dict.label"
-              :value="dict.value"
+              :value="parseInt(dict.value)"
             ></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="金额" prop="amount">
           <el-input-number v-model="form.amount" :min="0" :precision="2" placeholder="请输入金额" />
         </el-form-item>
-        <el-form-item label="支付状态" prop="payStatus">
-          <el-radio-group v-model="form.payStatus">
-            <el-radio
-              v-for="dict in dict.type.memorial_pay_status"
-              :key="dict.value"
-              :label="dict.value"
-            >{{dict.label}}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="订单状态" prop="orderStatus">
-          <el-radio-group v-model="form.orderStatus">
+        <el-form-item label="订单状态" prop="status">
+          <el-radio-group v-model="form.status">
             <el-radio
               v-for="dict in dict.type.memorial_order_status"
               :key="dict.value"
-              :label="dict.value"
+              :label="parseInt(dict.value)"
             >{{dict.label}}</el-radio>
           </el-radio-group>
         </el-form-item>
@@ -210,7 +197,7 @@ import { listOrder, getOrder, addOrder, updateOrder, delOrder } from "@/api/memo
 
 export default {
   name: "Order",
-  dicts: ['memorial_order_type', 'memorial_pay_status', 'memorial_order_status'],
+  dicts: ['memorial_package_type', 'memorial_order_status'],
   data() {
     return {
       loading: true,
@@ -227,9 +214,8 @@ export default {
         pageNum: 1,
         pageSize: 10,
         orderNo: undefined,
-        orderType: undefined,
-        payStatus: undefined,
-        orderStatus: undefined
+        packageType: undefined,
+        status: undefined
       },
       form: {},
       rules: {
@@ -239,8 +225,8 @@ export default {
         deceasedId: [
           { required: true, message: "逝者ID不能为空", trigger: "blur" }
         ],
-        orderType: [
-          { required: true, message: "订单类型不能为空", trigger: "change" }
+        packageType: [
+          { required: true, message: "套餐类型不能为空", trigger: "change" }
         ],
         amount: [
           { required: true, message: "金额不能为空", trigger: "blur" }
@@ -268,11 +254,15 @@ export default {
       this.form = {
         orderId: undefined,
         orderNo: undefined,
+        orgId: undefined,
         deceasedId: undefined,
-        orderType: undefined,
+        customerName: undefined,
+        customerPhone: undefined,
+        packageType: undefined,
         amount: undefined,
-        payStatus: undefined,
-        orderStatus: undefined
+        status: 0,
+        payTime: undefined,
+        remark: undefined
       }
       this.resetForm("form")
     },

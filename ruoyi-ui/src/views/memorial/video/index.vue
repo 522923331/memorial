@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="视频标题" prop="videoTitle">
+      <el-form-item label="视频标题" prop="title">
         <el-input
-          v-model="queryParams.videoTitle"
+          v-model="queryParams.title"
           placeholder="请输入视频标题"
           clearable
           @keyup.enter.native="handleQuery"
@@ -63,8 +63,11 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="videoId" width="80" />
       <el-table-column label="逝者ID" align="center" prop="deceasedId" width="100" />
-      <el-table-column label="视频标题" align="center" prop="videoTitle" :show-overflow-tooltip="true" />
+      <el-table-column label="视频标题" align="center" prop="title" :show-overflow-tooltip="true" />
       <el-table-column label="视频地址" align="center" prop="videoUrl" :show-overflow-tooltip="true" />
+      <el-table-column label="封面地址" align="center" prop="coverUrl" :show-overflow-tooltip="true" />
+      <el-table-column label="描述" align="center" prop="description" :show-overflow-tooltip="true" />
+      <el-table-column label="排序" align="center" prop="sortOrder" width="80" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
@@ -104,11 +107,20 @@
         <el-form-item label="逝者ID" prop="deceasedId">
           <el-input v-model="form.deceasedId" placeholder="请输入逝者ID" />
         </el-form-item>
-        <el-form-item label="视频标题" prop="videoTitle">
-          <el-input v-model="form.videoTitle" placeholder="请输入视频标题" />
+        <el-form-item label="视频标题" prop="title">
+          <el-input v-model="form.title" placeholder="请输入视频标题" />
         </el-form-item>
         <el-form-item label="视频地址" prop="videoUrl">
           <el-input v-model="form.videoUrl" placeholder="请输入视频地址" />
+        </el-form-item>
+        <el-form-item label="封面地址" prop="coverUrl">
+          <el-input v-model="form.coverUrl" placeholder="请输入封面图片地址" />
+        </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input v-model="form.description" type="textarea" placeholder="请输入视频描述" />
+        </el-form-item>
+        <el-form-item label="排序号" prop="sortOrder">
+          <el-input-number v-model="form.sortOrder" :min="0" placeholder="排序号" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -138,7 +150,7 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        videoTitle: undefined,
+        title: undefined,
         deceasedId: undefined
       },
       form: {},
@@ -146,7 +158,7 @@ export default {
         deceasedId: [
           { required: true, message: "逝者ID不能为空", trigger: "blur" }
         ],
-        videoTitle: [
+        title: [
           { required: true, message: "视频标题不能为空", trigger: "blur" }
         ],
         videoUrl: [
@@ -175,8 +187,11 @@ export default {
       this.form = {
         videoId: undefined,
         deceasedId: undefined,
-        videoTitle: undefined,
-        videoUrl: undefined
+        title: undefined,
+        videoUrl: undefined,
+        coverUrl: undefined,
+        description: undefined,
+        sortOrder: 0
       }
       this.resetForm("form")
     },

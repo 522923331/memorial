@@ -9,10 +9,10 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="机构类型" prop="orgType">
-        <el-select v-model="queryParams.orgType" placeholder="机构类型" clearable>
+      <el-form-item label="套餐类型" prop="packageType">
+        <el-select v-model="queryParams.packageType" placeholder="套餐类型" clearable>
           <el-option
-            v-for="dict in dict.type.memorial_org_type"
+            v-for="dict in dict.type.memorial_package_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -83,14 +83,21 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" align="center" prop="orgId" width="80" />
       <el-table-column label="机构名称" align="center" prop="orgName" :show-overflow-tooltip="true" />
-      <el-table-column label="机构类型" align="center" prop="orgType" width="100">
+      <el-table-column label="机构编码" align="center" prop="orgCode" width="120" />
+      <el-table-column label="套餐类型" align="center" prop="packageType" width="100">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.memorial_org_type" :value="scope.row.orgType"/>
+          <dict-tag :options="dict.type.memorial_package_type" :value="scope.row.packageType"/>
         </template>
       </el-table-column>
       <el-table-column label="联系人" align="center" prop="contactName" width="120" />
       <el-table-column label="联系电话" align="center" prop="contactPhone" width="130" />
       <el-table-column label="地址" align="center" prop="address" :show-overflow-tooltip="true" />
+      <el-table-column label="到期时间" align="center" prop="expireTime" width="120" />
+      <el-table-column label="状态" align="center" prop="status" width="80">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.status"/>
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="160">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
@@ -130,13 +137,16 @@
         <el-form-item label="机构名称" prop="orgName">
           <el-input v-model="form.orgName" placeholder="请输入机构名称" />
         </el-form-item>
-        <el-form-item label="机构类型" prop="orgType">
-          <el-select v-model="form.orgType" placeholder="请选择机构类型">
+        <el-form-item label="机构编码" prop="orgCode">
+          <el-input v-model="form.orgCode" placeholder="请输入机构编码" />
+        </el-form-item>
+        <el-form-item label="套餐类型" prop="packageType">
+          <el-select v-model="form.packageType" placeholder="请选择套餐类型">
             <el-option
-              v-for="dict in dict.type.memorial_org_type"
+              v-for="dict in dict.type.memorial_package_type"
               :key="dict.value"
               :label="dict.label"
-              :value="dict.value"
+              :value="parseInt(dict.value)"
             ></el-option>
           </el-select>
         </el-form-item>
@@ -148,6 +158,21 @@
         </el-form-item>
         <el-form-item label="地址" prop="address">
           <el-input v-model="form.address" type="textarea" placeholder="请输入地址" />
+        </el-form-item>
+        <el-form-item label="到期时间" prop="expireTime">
+          <el-input v-model="form.expireTime" placeholder="请输入到期时间，如2027-12-31" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="form.status">
+            <el-radio
+              v-for="dict in dict.type.sys_normal_disable"
+              :key="dict.value"
+              :label="dict.value"
+            >{{dict.label}}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -163,7 +188,7 @@ import { listOrganization, getOrganization, addOrganization, updateOrganization,
 
 export default {
   name: "Organization",
-  dicts: ['memorial_org_type'],
+  dicts: ['memorial_package_type', 'sys_normal_disable'],
   data() {
     return {
       loading: true,
@@ -179,7 +204,7 @@ export default {
         pageNum: 1,
         pageSize: 10,
         orgName: undefined,
-        orgType: undefined,
+        packageType: undefined,
         contactPhone: undefined
       },
       form: {},
@@ -187,8 +212,11 @@ export default {
         orgName: [
           { required: true, message: "机构名称不能为空", trigger: "blur" }
         ],
-        orgType: [
-          { required: true, message: "机构类型不能为空", trigger: "change" }
+        orgCode: [
+          { required: true, message: "机构编码不能为空", trigger: "blur" }
+        ],
+        packageType: [
+          { required: true, message: "套餐类型不能为空", trigger: "change" }
         ]
       }
     }
@@ -213,10 +241,14 @@ export default {
       this.form = {
         orgId: undefined,
         orgName: undefined,
-        orgType: undefined,
+        orgCode: undefined,
+        packageType: undefined,
         contactName: undefined,
         contactPhone: undefined,
-        address: undefined
+        address: undefined,
+        expireTime: undefined,
+        status: '0',
+        remark: undefined
       }
       this.resetForm("form")
     },
