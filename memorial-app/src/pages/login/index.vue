@@ -58,6 +58,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { sendSmsCode as sendSmsCodeApi } from '@/api/auth'
 
 const userStore = useUserStore()
 
@@ -104,21 +105,29 @@ async function onPhoneLogin() {
   }
 }
 
-function sendSmsCode() {
+async function sendSmsCode() {
   if (!phone.value || phone.value.length !== 11) {
     uni.showToast({ title: '请输入正确手机号', icon: 'none' })
     return
   }
-  // P0: 简单提示，实际需要调用短信发送 API
-  uni.showToast({ title: '验证码已发送', icon: 'success' })
-  countdown.value = 60
-  countdownTimer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0 && countdownTimer) {
-      clearInterval(countdownTimer)
-      countdownTimer = null
+  try {
+    const res = await sendSmsCodeApi(phone.value)
+    uni.showToast({ title: '验证码已发送', icon: 'success' })
+    // P0阶段：后端直接返回验证码，自动填入方便测试
+    if (res.data?.code) {
+      smsCode.value = res.data.code
     }
-  }, 1000)
+    countdown.value = 60
+    countdownTimer = setInterval(() => {
+      countdown.value--
+      if (countdown.value <= 0 && countdownTimer) {
+        clearInterval(countdownTimer)
+        countdownTimer = null
+      }
+    }, 1000)
+  } catch {
+    // 错误由 request 拦截器处理
+  }
 }
 // #endif
 </script>

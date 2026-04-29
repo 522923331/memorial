@@ -41,7 +41,7 @@
       <view v-else class="flower-list">
         <view v-for="fl in flowers" :key="fl.flowerId" class="flower-record">
           <text class="flower-emoji">{{ getFlowerEmoji(fl.flowerType) }}</text>
-          <text class="flower-who">{{ fl.authorName || '匿名' }}</text>
+          <text class="flower-who">{{ fl.visitorName || '匿名' }}</text>
           <text class="flower-when">{{ formatTime(fl.createTime) }}</text>
         </view>
       </view>

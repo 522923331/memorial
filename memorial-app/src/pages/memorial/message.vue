@@ -7,7 +7,7 @@
       </view>
       <view v-for="msg in messages" :key="msg.messageId" class="message-item">
         <view class="message-header">
-          <text class="message-author">{{ msg.authorName || '匿名' }}</text>
+          <text class="message-author">{{ msg.visitorName || '匿名' }}</text>
           <text class="message-time">{{ formatTime(msg.createTime) }}</text>
         </view>
         <text class="message-content">{{ msg.content }}</text>

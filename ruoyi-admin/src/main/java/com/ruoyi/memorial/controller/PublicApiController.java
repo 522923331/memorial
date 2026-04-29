@@ -144,4 +144,24 @@ public class PublicApiController {
     private AjaxResult toAjax(int result) {
         return result > 0 ? AjaxResult.success() : AjaxResult.error();
     }
+
+    /**
+     * 搜索逝者（公开）
+     */
+    @GetMapping("/search")
+    public AjaxResult searchDeceased(@RequestParam String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return AjaxResult.error("请输入搜索关键词");
+        }
+        Deceased query = new Deceased();
+        query.setName(keyword.trim());
+        query.setStatus("0");
+        query.setIsPublic("0");
+        List<Deceased> list = deceasedService.selectDeceasedList(query);
+        // 限制返回20条
+        if (list.size() > 20) {
+            list = list.subList(0, 20);
+        }
+        return AjaxResult.success(list);
+    }
 }

@@ -12,7 +12,7 @@
           controls
           object-fit="contain"
         />
-        <text class="video-title">{{ video.videoTitle || '纪念视频' }}</text>
+        <text class="video-title">{{ video.title || '纪念视频' }}</text>
       </view>
     </view>
   </view>

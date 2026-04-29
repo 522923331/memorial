@@ -24,8 +24,15 @@
     <view v-if="showBindPhone" class="modal-mask" @tap="showBindPhone = false">
       <view class="modal-content" @tap.stop>
         <text class="modal-title">绑定手机号</text>
-        <input class="modal-input" v-model="bindPhone" type="number" maxlength="11" placeholder="请输入手机号" />
-        <input class="modal-input" v-model="bindCode" type="number" maxlength="6" placeholder="验证码" />
+        <input class="modal-input" v-model="bindPhoneNum" type="number" maxlength="11" placeholder="请输入手机号" />
+        <view class="code-group">
+          <input class="modal-input code-input" v-model="bindCode" type="number" maxlength="6" placeholder="验证码" />
+          <button
+            class="code-btn"
+            :disabled="bindCountdown > 0"
+            @tap="handleSendBindCode"
+          >{{ bindCountdown > 0 ? bindCountdown + 's' : '获取验证码' }}</button>
+        </view>
         <view class="modal-btns">
           <button class="modal-btn cancel" @tap="showBindPhone = false">取消</button>
           <button class="modal-btn confirm" @tap="handleBindPhone">确定</button>
@@ -38,21 +45,47 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { bindPhone } from '@/api/auth'
+import { bindPhone, sendSmsCode as sendSmsCodeApi } from '@/api/auth'
 
 const userStore = useUserStore()
 
 const showBindPhone = ref(false)
-const bindPhone = ref('')
+const bindPhoneNum = ref('')
 const bindCode = ref('')
+const bindCountdown = ref(0)
+let bindCountdownTimer: ReturnType<typeof setInterval> | null = null
 
-async function handleBindPhone() {
-  if (!bindPhone.value || bindPhone.value.length !== 11) {
+async function handleSendBindCode() {
+  if (!bindPhoneNum.value || bindPhoneNum.value.length !== 11) {
     uni.showToast({ title: '请输入正确手机号', icon: 'none' })
     return
   }
   try {
-    await bindPhone(bindPhone.value, bindCode.value)
+    const res = await sendSmsCodeApi(bindPhoneNum.value)
+    uni.showToast({ title: '验证码已发送', icon: 'success' })
+    if (res.data?.code) {
+      bindCode.value = res.data.code
+    }
+    bindCountdown.value = 60
+    bindCountdownTimer = setInterval(() => {
+      bindCountdown.value--
+      if (bindCountdown.value <= 0 && bindCountdownTimer) {
+        clearInterval(bindCountdownTimer)
+        bindCountdownTimer = null
+      }
+    }, 1000)
+  } catch {
+    // 错误由 request 拦截器处理
+  }
+}
+
+async function handleBindPhone() {
+  if (!bindPhoneNum.value || bindPhoneNum.value.length !== 11) {
+    uni.showToast({ title: '请输入正确手机号', icon: 'none' })
+    return
+  }
+  try {
+    await bindPhone(bindPhoneNum.value, bindCode.value)
     uni.showToast({ title: '绑定成功', icon: 'success' })
     showBindPhone.value = false
     await userStore.fetchUserInfo()
@@ -155,6 +188,31 @@ async function handleBindPhone() {
   background: #f5f5f5;
   border-radius: 12rpx;
   margin-bottom: 20rpx;
+}
+
+.code-group {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.code-input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.code-btn {
+  font-size: 24rpx;
+  color: #2c3e50;
+  background: #f5f5f5;
+  padding: 20rpx 16rpx;
+  border-radius: 12rpx;
+  border: none;
+  white-space: nowrap;
+}
+
+.code-btn[disabled] {
+  color: #ccc;
 }
 
 .modal-btns {

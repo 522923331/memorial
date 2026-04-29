@@ -48,10 +48,10 @@
     </view>
 
     <!-- 纪念文章 -->
-    <view v-if="deceased?.memorialContent" class="section">
+    <view v-if="deceased?.bio" class="section">
       <view class="section-title">纪念文</view>
       <view class="bio-content" :class="{ 'bio-collapsed': bioCollapsed }">
-        <rich-text :nodes="deceased.memorialContent" />
+        <rich-text :nodes="deceased.bio" />
       </view>
       <view v-if="bioCollapsed" class="bio-expand" @tap="bioCollapsed = false">
         <text>展开全部</text>
