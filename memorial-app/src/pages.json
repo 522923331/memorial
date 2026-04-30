@@ -55,6 +55,42 @@
       "style": {
         "navigationBarTitleText": "个人信息"
       }
+    },
+    {
+      "path": "pages/family/memorials",
+      "style": {
+        "navigationBarTitleText": "我的纪念馆"
+      }
+    },
+    {
+      "path": "pages/family/memorial-edit",
+      "style": {
+        "navigationBarTitleText": "编辑纪念馆"
+      }
+    },
+    {
+      "path": "pages/family/album-manage",
+      "style": {
+        "navigationBarTitleText": "相册管理"
+      }
+    },
+    {
+      "path": "pages/family/video-manage",
+      "style": {
+        "navigationBarTitleText": "视频管理"
+      }
+    },
+    {
+      "path": "pages/family/message-audit",
+      "style": {
+        "navigationBarTitleText": "留言审核"
+      }
+    },
+    {
+      "path": "pages/family/qrcode",
+      "style": {
+        "navigationBarTitleText": "二维码"
+      }
     }
   ],
   "globalStyle": {

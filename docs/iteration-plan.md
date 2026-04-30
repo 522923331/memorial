@@ -269,15 +269,26 @@
 - [x] `components/` 目录有 6 个组件文件（NavBar, MemorialHeader, AlbumGrid, VideoCard, MessageItem, FlowerItem）
 - [x] 所有组件 TypeScript 类型完整（defineProps + TypeScript 接口）
 - [x] 页面重构后视觉效果不变
-- [ ] H5 编译无报错
+- [x] H5 编译无报错
 
 ### 迭代 2 验收
-- [ ] 家属登录后可见"我的纪念馆"
-- [ ] 创建纪念馆表单提交成功
-- [ ] 相册上传/删除功能正常
-- [ ] 视频上传/删除功能正常
-- [ ] 留言审核通过/拒绝生效
-- [ ] 二维码可生成和保存
+- [x] 后端 FamilyApiController.java 创建完成（/api/family/* 全部15个端点）
+- [x] 前端 api/family.ts 创建完成（15个API函数）
+- [x] 前端 stores/family.ts 创建完成
+- [x] 前端 types/family.ts 创建完成
+- [x] ImageUploader 组件创建完成
+- [x] 6 个家属管理页面创建完成（memorials, memorial-edit, album-manage, video-manage, message-audit, qrcode）
+- [x] user store 添加 isFamilyMember 状态和 checkFamilyStatus 方法
+- [x] 我的页面添加"我的纪念馆"菜单入口
+- [x] pages.json 添加6个新路由
+- [x] TypeScript 类型检查通过（vue-tsc --noEmit）
+- [x] H5 编译通过（npm run build:h5）
+- [ ] 家属登录后可见"我的纪念馆"（需后端联调验证）
+- [ ] 创建纪念馆表单提交成功（需后端联调验证）
+- [ ] 相册上传/删除功能正常（需后端联调验证）
+- [ ] 视频上传/删除功能正常（需后端联调验证）
+- [ ] 留言审核通过/拒绝生效（需后端联调验证）
+- [ ] 二维码可生成和保存（需后端联调验证）
 
 ### 迭代 4 验收
 - [ ] 微信支付流程完整走通

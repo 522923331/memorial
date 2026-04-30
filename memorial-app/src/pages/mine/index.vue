@@ -18,6 +18,11 @@
 
     <!-- 菜单列表 -->
     <view class="menu-section">
+      <view class="menu-item" @tap="goMyMemorials">
+        <uni-icons type="home" size="22" color="#666" />
+        <text class="menu-text">我的纪念馆</text>
+        <uni-icons type="right" size="16" color="#ccc" />
+      </view>
       <view class="menu-item" @tap="goProfile">
         <uni-icons type="person" size="22" color="#666" />
         <text class="menu-text">个人信息</text>
@@ -46,6 +51,14 @@ function goLogin() {
   if (!userStore.isLoggedIn) {
     uni.navigateTo({ url: '/pages/login/index' })
   }
+}
+
+function goMyMemorials() {
+  if (!userStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/login/index' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/family/memorials' })
 }
 
 function goProfile() {
