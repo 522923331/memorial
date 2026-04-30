@@ -93,6 +93,12 @@ public class PublicApiController {
         }
         message.setIpAddress(IpUtils.getIpAddr(request));
         message.setIsAudited("0");
+        if (message.getVisitorPhone() == null) {
+            message.setVisitorPhone("");
+        }
+        if (message.getRelation() == null) {
+            message.setRelation("");
+        }
         message.setCreateTime(DateUtils.getNowDate());
         int result = messageService.insertMessage(message);
         if (result > 0) {

@@ -124,8 +124,20 @@ public class FamilyApiController {
         }
 
         deceased.setFamilyUserId(userId);
+        if (deceased.getOrgId() == null) {
+            deceased.setOrgId(0L);
+        }
         deceased.setStatus("0");
         deceased.setDelFlag("0");
+        if (deceased.getIsPublic() == null) {
+            deceased.setIsPublic("0");
+        }
+        if (deceased.getAllowMessage() == null) {
+            deceased.setAllowMessage("0");
+        }
+        if (deceased.getMessageAudit() == null) {
+            deceased.setMessageAudit("1");
+        }
         deceased.setCreateBy(String.valueOf(userId));
         deceased.setCreateTime(DateUtils.getNowDate());
 
