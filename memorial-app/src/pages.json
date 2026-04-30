@@ -91,6 +91,12 @@
       "style": {
         "navigationBarTitleText": "二维码"
       }
+    },
+    {
+      "path": "pages/family/statistics",
+      "style": {
+        "navigationBarTitleText": "访问统计"
+      }
     }
   ],
   "globalStyle": {

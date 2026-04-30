@@ -66,12 +66,23 @@
 
       <view class="form-item vertical">
         <text class="form-label">生平简介</text>
-        <textarea
-          class="form-textarea"
-          v-model="form.bio"
+        <view class="bio-toolbar">
+          <view class="toolbar-btn" @tap="formatBio('bold')">
+            <text class="toolbar-icon bold">B</text>
+          </view>
+          <view class="toolbar-btn" @tap="formatBio('italic')">
+            <text class="toolbar-icon italic">I</text>
+          </view>
+          <view class="toolbar-btn" @tap="formatBio('insertLineBreak')">
+            <text class="toolbar-icon">↵</text>
+          </view>
+        </view>
+        <editor
+          id="bioEditor"
+          class="bio-editor"
           placeholder="请输入生平简介"
-          maxlength="2000"
-          :auto-height="false"
+          @input="onBioInput"
+          @ready="onEditorReady"
         />
       </view>
     </view>
@@ -113,6 +124,8 @@ const isEdit = ref(false)
 const deceasedId = ref(0)
 const genderOptions = ['男', '女']
 const genderIndex = ref(0)
+const editorCtx = ref<any>(null)
+const bioContent = ref('')
 
 const form = ref({
   name: '',
@@ -155,6 +168,26 @@ onLoad(async (options) => {
     }
   }
 })
+
+function onEditorReady() {
+  uni.createSelectorQuery()
+    .select('#bioEditor')
+    .context((res: any) => {
+      editorCtx.value = res.context
+      if (form.value.bio) {
+        editorCtx.value.setContents({ html: form.value.bio })
+      }
+    })
+    .exec()
+}
+
+function formatBio(name: string) {
+  editorCtx.value?.format(name)
+}
+
+function onBioInput(e: any) {
+  bioContent.value = e.detail.html
+}
 
 function onGenderChange(e: any) {
   genderIndex.value = e.detail.value
@@ -207,6 +240,10 @@ function validate(): boolean {
 
 async function handleSubmit() {
   if (!validate()) return
+
+  if (bioContent.value) {
+    form.value.bio = bioContent.value
+  }
 
   uni.showLoading({ title: isEdit.value ? '保存中...' : '创建中...' })
   try {
@@ -307,6 +344,45 @@ async function handleSubmit() {
   padding: 16rpx 0;
   height: 200rpx;
   margin-top: 12rpx;
+}
+
+.bio-toolbar {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 12rpx;
+  padding: 12rpx 0;
+}
+
+.toolbar-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 8rpx;
+}
+
+.toolbar-btn:active {
+  background: #e0e0e0;
+}
+
+.toolbar-icon {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.toolbar-icon.italic {
+  font-style: italic;
+}
+
+.bio-editor {
+  width: 100%;
+  min-height: 300rpx;
+  font-size: 28rpx;
+  padding: 16rpx 0;
+  line-height: 1.8;
 }
 
 .submit-section {

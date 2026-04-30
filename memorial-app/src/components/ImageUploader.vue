@@ -32,7 +32,21 @@ async function chooseImage() {
     count: 1,
     sizeType: ['compressed'],
     success: async (res) => {
-      const filePath = res.tempFilePaths[0]
+      let filePath = res.tempFilePaths[0]
+      // #ifdef MP-WEIXIN
+      try {
+        filePath = await new Promise<string>((resolve) => {
+          uni.cropImage({
+            src: filePath,
+            cropScale: '1:1',
+            success: (cropRes: any) => resolve(cropRes.tempFilePath),
+            fail: () => resolve(filePath),
+          })
+        })
+      } catch {
+        // cropImage not supported, use original
+      }
+      // #endif
       uni.showLoading({ title: '上传中...' })
       try {
         const uploadRes = await uploadFile(filePath)

@@ -290,6 +290,24 @@
 - [x] 留言审核通过/拒绝生效（后端联调通过）
 - [x] 二维码可生成和保存（后端联调通过）
 
+### 迭代 3 验收
+- [x] 3.1 留言批量审核（在迭代2中已一并实现）
+- [x] 3.5 隐私设置（在迭代2中已一并实现）
+- [x] 后端 pendingCount 端点（GET /api/family/messages/pendingCount）
+- [x] 后端 statistics 端点（GET /api/family/statistics/{deceasedId}）
+- [x] 后端 memorials/statistics 端点（GET /api/family/memorials/statistics）
+- [x] 前端 getPendingMessageCount API 函数
+- [x] 前端 family store 添加 pendingMessageCount + loadPendingMessageCount
+- [x] 我的页面"我的纪念馆"显示待审核留言红色徽章
+- [x] 前端 statistics.vue 统计页面创建（访问/留言/献花数 + 近7日趋势）
+- [x] 前端 memorials.vue 添加"统计"入口按钮
+- [x] pages.json 注册 statistics 路由
+- [x] bio 字段从 textarea 替换为 editor 组件（加粗/斜体/换行工具栏）
+- [x] ImageUploader 微信小程序端添加 uni.cropImage 裁剪
+- [x] TypeScript 类型检查通过（vue-tsc --noEmit）
+- [x] H5 编译通过（npm run build:h5）
+- [x] 后端联调测试 16/16 通过
+
 ### 迭代 4 验收
 - [ ] 微信支付流程完整走通
 - [ ] 订单状态正确更新

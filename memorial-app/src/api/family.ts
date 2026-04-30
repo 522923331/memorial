@@ -82,3 +82,18 @@ export function batchAuditMessages(status: string, messageIds: number[]) {
 export function regenerateQrcode(deceasedId: number) {
   return post<{ qrcodeUrl: string; qrcodeCode: string }>(`/api/family/memorial/qrcode/${deceasedId}`)
 }
+
+/** 获取待审核留言总数 */
+export function getPendingMessageCount() {
+  return get<{ pendingCount: number }>('/api/family/messages/pendingCount')
+}
+
+/** 获取纪念馆统计数据 */
+export function getMemorialStatistics(deceasedId: number) {
+  return get(`/api/family/statistics/${deceasedId}`)
+}
+
+/** 获取我的所有纪念馆统计摘要 */
+export function getMyStatisticsSummary() {
+  return get('/api/family/memorials/statistics')
+}

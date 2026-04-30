@@ -43,6 +43,10 @@
             <uni-icons type="qr_code" size="18" color="#666" />
             <text class="action-text">二维码</text>
           </view>
+          <view class="action-btn" @tap="goStats(item)">
+            <uni-icons type="bars" size="18" color="#666" />
+            <text class="action-text">统计</text>
+          </view>
         </view>
       </view>
     </view>
@@ -93,6 +97,10 @@ function goMessage(item: any) {
 
 function goQrcode(item: any) {
   uni.navigateTo({ url: `/pages/family/qrcode?deceasedId=${item.deceasedId}&name=${encodeURIComponent(item.name)}` })
+}
+
+function goStats(item: any) {
+  uni.navigateTo({ url: `/pages/family/statistics?deceasedId=${item.deceasedId}&name=${encodeURIComponent(item.name)}` })
 }
 </script>
 

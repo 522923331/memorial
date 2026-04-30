@@ -18,8 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * 家属端API（需token，但无需RuoYi权限）
@@ -41,6 +40,9 @@ public class FamilyApiController {
 
     @Autowired
     private IMessageService messageService;
+
+    @Autowired
+    private IStatisticsService statisticsService;
 
     @Autowired
     private QrCodeUtil qrCodeUtil;
@@ -472,5 +474,82 @@ public class FamilyApiController {
         }
 
         return toAjax(messageService.batchAuditMessage(messageIds, status));
+    }
+
+    // ========== 消息通知 ==========
+
+    /**
+     * 获取待审核留言总数（跨所有纪念馆）
+     */
+    @GetMapping("/messages/pendingCount")
+    public AjaxResult getPendingMessageCount() {
+        Long userId = requireUserId();
+        if (userId == null) {
+            return AjaxResult.error(401, "请先登录");
+        }
+        List<Deceased> myMemorials = deceasedService.selectDeceasedByFamilyId(userId);
+        int totalCount = 0;
+        for (Deceased d : myMemorials) {
+            Message query = new Message();
+            query.setDeceasedId(d.getDeceasedId());
+            query.setIsAudited("0");
+            List<Message> pending = messageService.selectMessageList(query);
+            totalCount += pending.size();
+        }
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("pendingCount", totalCount);
+        return ajax;
+    }
+
+    // ========== 访问统计 ==========
+
+    /**
+     * 获取单个纪念馆的统计数据
+     */
+    @GetMapping("/statistics/{deceasedId}")
+    public AjaxResult getMemorialStatistics(@PathVariable Long deceasedId) {
+        Long userId = requireUserId();
+        if (userId == null) {
+            return AjaxResult.error(401, "请先登录");
+        }
+        AjaxResult ownership = verifyOwnership(deceasedId, userId);
+        if (ownership != null) {
+            return ownership;
+        }
+
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("totalVisit", statisticsService.getTotalVisitByDeceasedId(deceasedId));
+        ajax.put("totalMessage", statisticsService.getTotalMessageByDeceasedId(deceasedId));
+        ajax.put("totalFlower", statisticsService.getTotalFlowerByDeceasedId(deceasedId));
+
+        Statistics query = new Statistics();
+        query.setDeceasedId(deceasedId);
+        List<Statistics> dailyStats = statisticsService.selectStatisticsList(query);
+        ajax.put("dailyStats", dailyStats);
+        return ajax;
+    }
+
+    /**
+     * 获取我的所有纪念馆统计摘要
+     */
+    @GetMapping("/memorials/statistics")
+    public AjaxResult getMyMemorialsStatistics() {
+        Long userId = requireUserId();
+        if (userId == null) {
+            return AjaxResult.error(401, "请先登录");
+        }
+        List<Deceased> myMemorials = deceasedService.selectDeceasedByFamilyId(userId);
+        List<Map<String, Object>> summary = new ArrayList<>();
+        for (Deceased d : myMemorials) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("deceasedId", d.getDeceasedId());
+            item.put("name", d.getName());
+            item.put("coverImage", d.getCoverImage());
+            item.put("totalVisit", statisticsService.getTotalVisitByDeceasedId(d.getDeceasedId()));
+            item.put("totalMessage", statisticsService.getTotalMessageByDeceasedId(d.getDeceasedId()));
+            item.put("totalFlower", statisticsService.getTotalFlowerByDeceasedId(d.getDeceasedId()));
+            summary.add(item);
+        }
+        return AjaxResult.success(summary);
     }
 }

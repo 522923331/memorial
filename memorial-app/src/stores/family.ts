@@ -13,6 +13,7 @@ import {
   getPendingMessages,
   auditMessage,
   batchAuditMessages,
+  getPendingMessageCount,
 } from '@/api/family'
 import type { Deceased, DeceasedAlbum, DeceasedVideo, Message } from '@/types/memorial'
 
@@ -22,6 +23,7 @@ export const useFamilyStore = defineStore('family', () => {
   const albums = ref<DeceasedAlbum[]>([])
   const videos = ref<DeceasedVideo[]>([])
   const pendingMessages = ref<Message[]>([])
+  const pendingMessageCount = ref(0)
   const loading = ref(false)
 
   async function loadMyMemorials() {
@@ -123,12 +125,22 @@ export const useFamilyStore = defineStore('family', () => {
     pendingMessages.value = pendingMessages.value.filter((m) => !idSet.has(m.messageId))
   }
 
+  async function loadPendingMessageCount() {
+    try {
+      const res = await getPendingMessageCount()
+      pendingMessageCount.value = (res as any).pendingCount || 0
+    } catch {
+      pendingMessageCount.value = 0
+    }
+  }
+
   function clearFamily() {
     memorials.value = []
     currentMemorial.value = null
     albums.value = []
     videos.value = []
     pendingMessages.value = []
+    pendingMessageCount.value = 0
   }
 
   return {
@@ -137,6 +149,7 @@ export const useFamilyStore = defineStore('family', () => {
     albums,
     videos,
     pendingMessages,
+    pendingMessageCount,
     loading,
     loadMyMemorials,
     loadMemorialDetail,
@@ -148,6 +161,7 @@ export const useFamilyStore = defineStore('family', () => {
     removeVideo,
     editVideo,
     loadPendingMessages,
+    loadPendingMessageCount,
     approveMessage,
     rejectMessage,
     batchApprove,

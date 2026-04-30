@@ -21,6 +21,9 @@
       <view class="menu-item" @tap="goMyMemorials">
         <uni-icons type="home" size="22" color="#666" />
         <text class="menu-text">我的纪念馆</text>
+        <view v-if="familyStore.pendingMessageCount > 0" class="badge">
+          {{ familyStore.pendingMessageCount > 99 ? '99+' : familyStore.pendingMessageCount }}
+        </view>
         <uni-icons type="right" size="16" color="#ccc" />
       </view>
       <view class="menu-item" @tap="goProfile">
@@ -44,8 +47,17 @@
 
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user'
+import { useFamilyStore } from '@/stores/family'
+import { onShow } from '@dcloudio/uni-app'
 
 const userStore = useUserStore()
+const familyStore = useFamilyStore()
+
+onShow(() => {
+  if (userStore.isLoggedIn) {
+    familyStore.loadPendingMessageCount()
+  }
+})
 
 function goLogin() {
   if (!userStore.isLoggedIn) {
@@ -154,6 +166,19 @@ function handleLogout() {
   font-size: 30rpx;
   color: #333;
   margin-left: 16rpx;
+}
+
+.badge {
+  background: #dd524d;
+  color: #fff;
+  font-size: 20rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  text-align: center;
+  border-radius: 16rpx;
+  padding: 0 8rpx;
+  margin-right: 8rpx;
 }
 
 .logout-section {
