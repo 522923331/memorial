@@ -127,6 +127,18 @@ public class FamilyApiController {
         if (deceased.getOrgId() == null) {
             deceased.setOrgId(0L);
         }
+        if (deceased.getCoverImage() == null) {
+            deceased.setCoverImage("");
+        }
+        if (deceased.getGender() == null) {
+            deceased.setGender("0");
+        }
+        if (deceased.getCemeteryArea() == null) {
+            deceased.setCemeteryArea("");
+        }
+        if (deceased.getCemeteryNumber() == null) {
+            deceased.setCemeteryNumber("");
+        }
         deceased.setStatus("0");
         deceased.setDelFlag("0");
         if (deceased.getIsPublic() == null) {
@@ -267,7 +279,10 @@ public class FamilyApiController {
         DeceasedAlbum album = new DeceasedAlbum();
         album.setDeceasedId(deceasedId);
         album.setImageUrl(imageUrl);
+        album.setThumbnailUrl("");
+        album.setDescription("");
         album.setSortOrder(0);
+        album.setCreateTime(DateUtils.dateTimeNow("yyyy-MM-dd HH:mm:ss"));
         deceasedAlbumService.insertAlbum(album);
         return AjaxResult.success(album);
     }
@@ -334,8 +349,10 @@ public class FamilyApiController {
         video.setDeceasedId(deceasedId);
         video.setVideoUrl(videoUrl);
         video.setTitle(title != null ? title : "纪念视频");
-        video.setDescription(description);
+        video.setCoverUrl("");
+        video.setDescription(description != null ? description : "");
         video.setSortOrder(0);
+        video.setCreateTime(DateUtils.getNowDate());
         deceasedVideoService.insertDeceasedVideo(video);
         return AjaxResult.success(video);
     }

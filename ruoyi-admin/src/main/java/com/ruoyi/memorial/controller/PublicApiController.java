@@ -93,6 +93,9 @@ public class PublicApiController {
         }
         message.setIpAddress(IpUtils.getIpAddr(request));
         message.setIsAudited("0");
+        if (message.getVisitorName() == null) {
+            message.setVisitorName("");
+        }
         if (message.getVisitorPhone() == null) {
             message.setVisitorPhone("");
         }
@@ -121,6 +124,12 @@ public class PublicApiController {
             return AjaxResult.error("参数不完整");
         }
         flower.setIpAddress(IpUtils.getIpAddr(request));
+        if (flower.getVisitorName() == null) {
+            flower.setVisitorName("");
+        }
+        if (flower.getMessage() == null) {
+            flower.setMessage("");
+        }
         flower.setCreateTime(DateUtils.getNowDate());
         int result = flowerService.insertFlower(flower);
         if (result > 0) {
