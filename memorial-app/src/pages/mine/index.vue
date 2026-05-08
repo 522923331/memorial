@@ -183,6 +183,8 @@ function handleLogout() {
 
 .logout-section {
   padding: 40rpx 30rpx;
+  padding-bottom: calc(40rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
 .logout-btn {

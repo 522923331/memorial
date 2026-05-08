@@ -5,6 +5,7 @@
         class="header-cover"
         :src="deceased?.coverImage || '/static/images/default-avatar.png'"
         mode="aspectFill"
+        lazy-load
       />
       <view class="header-overlay" />
     </view>
@@ -17,6 +18,7 @@
           class="deceased-avatar"
           :src="deceased?.coverImage || '/static/images/default-avatar.png'"
           mode="aspectFill"
+          lazy-load
         />
         <text class="deceased-name">{{ deceased?.name }}</text>
         <text class="deceased-dates">

@@ -9,6 +9,7 @@
       class="album-img"
       :src="img.imageUrl"
       mode="aspectFill"
+      lazy-load
       @tap="previewImage(idx)"
     />
   </view>

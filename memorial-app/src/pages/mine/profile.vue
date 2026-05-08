@@ -1,22 +1,71 @@
 <template>
   <view class="page">
     <view class="profile-section">
-      <view class="avatar-row">
+      <!-- 头像 -->
+      <view class="avatar-row" @tap="handleAvatarChange">
         <image
           class="avatar"
           :src="userStore.avatar || '/static/images/default-avatar.png'"
           mode="aspectFill"
         />
+        <view class="avatar-edit-hint">
+          <uni-icons type="camera" size="16" color="#fff" />
+        </view>
       </view>
 
-      <view class="info-item">
+      <!-- 昵称 -->
+      <view class="info-item" @tap="showNickNameInput = true">
         <text class="info-label">昵称</text>
         <text class="info-value">{{ userStore.nickName || '-' }}</text>
+        <uni-icons type="right" size="16" color="#ccc" />
       </view>
+
+      <!-- 性别 -->
+      <view class="info-item" @tap="showSexPicker = true">
+        <text class="info-label">性别</text>
+        <text class="info-value">{{ sexLabel }}</text>
+        <uni-icons type="right" size="16" color="#ccc" />
+      </view>
+
+      <!-- 手机号 -->
       <view class="info-item">
         <text class="info-label">手机号</text>
         <text class="info-value">{{ userStore.phone || '未绑定' }}</text>
         <button v-if="!userStore.phone" class="bind-btn" size="mini" @tap="showBindPhone = true">绑定</button>
+      </view>
+    </view>
+
+    <!-- 昵称修改弹窗 -->
+    <view v-if="showNickNameInput" class="modal-mask" @tap="showNickNameInput = false">
+      <view class="modal-content" @tap.stop>
+        <text class="modal-title">修改昵称</text>
+        <input class="modal-input" v-model="editNickName" maxlength="20" placeholder="请输入昵称" />
+        <view class="modal-btns">
+          <button class="modal-btn cancel" @tap="showNickNameInput = false">取消</button>
+          <button class="modal-btn confirm" @tap="handleUpdateNickName">确定</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 性别选择弹窗 -->
+    <view v-if="showSexPicker" class="modal-mask" @tap="showSexPicker = false">
+      <view class="modal-content" @tap.stop>
+        <text class="modal-title">选择性别</text>
+        <view class="sex-options">
+          <view class="sex-option" :class="{ active: editSex === '0' }" @tap="editSex = '0'">
+            <text>男</text>
+          </view>
+          <view class="sex-option" :class="{ active: editSex === '1' }" @tap="editSex = '1'">
+            <text>女</text>
+          </view>
+          <view class="sex-option" :class="{ active: editSex === '2' }" @tap="editSex = '2'">
+            <text>未知</text>
+          </view>
+        </view>
+        <view class="modal-btns">
+          <button class="modal-btn cancel" @tap="showSexPicker = false">取消</button>
+          <button class="modal-btn confirm" @tap="handleUpdateSex">确定</button>
+        </view>
       </view>
     </view>
 
@@ -43,17 +92,81 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { bindPhone, sendSmsCode as sendSmsCodeApi } from '@/api/auth'
+import { uploadFile } from '@/api/family'
 
 const userStore = useUserStore()
 
+const showNickNameInput = ref(false)
+const editNickName = ref('')
+const showSexPicker = ref(false)
+const editSex = ref('0')
 const showBindPhone = ref(false)
 const bindPhoneNum = ref('')
 const bindCode = ref('')
 const bindCountdown = ref(0)
 let bindCountdownTimer: ReturnType<typeof setInterval> | null = null
+
+const sexLabel = computed(() => {
+  const sex = userStore.userInfo?.sex
+  if (sex === '0') return '男'
+  if (sex === '1') return '女'
+  if (sex === '2') return '未知'
+  return '未设置'
+})
+
+function handleAvatarChange() {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    success: async (res) => {
+      const filePath = res.tempFilePaths[0]
+      uni.showLoading({ title: '上传中...' })
+      try {
+        const uploadRes = await uploadFile(filePath)
+        await userStore.updateProfile({ avatar: uploadRes.data })
+        uni.showToast({ title: '头像已更新', icon: 'success' })
+      } catch {
+        uni.showToast({ title: '上传失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
+      }
+    },
+  })
+}
+
+// 昵称编辑
+;(() => {
+  const init = () => { editNickName.value = userStore.nickName }
+  // 初始化
+  init()
+})()
+
+function handleUpdateNickName() {
+  if (!editNickName.value.trim()) {
+    uni.showToast({ title: '请输入昵称', icon: 'none' })
+    return
+  }
+  uni.showLoading({ title: '保存中...' })
+  userStore.updateProfile({ nickName: editNickName.value.trim() })
+    .then(() => {
+      showNickNameInput.value = false
+      uni.showToast({ title: '昵称已更新', icon: 'success' })
+    })
+    .finally(() => uni.hideLoading())
+}
+
+function handleUpdateSex() {
+  uni.showLoading({ title: '保存中...' })
+  userStore.updateProfile({ sex: editSex.value })
+    .then(() => {
+      showSexPicker.value = false
+      uni.showToast({ title: '性别已更新', icon: 'success' })
+    })
+    .finally(() => uni.hideLoading())
+}
 
 async function handleSendBindCode() {
   if (!bindPhoneNum.value || bindPhoneNum.value.length !== 11) {
@@ -112,6 +225,7 @@ async function handleBindPhone() {
   display: flex;
   justify-content: center;
   padding: 20rpx 0 30rpx;
+  position: relative;
 }
 
 .avatar {
@@ -119,6 +233,19 @@ async function handleBindPhone() {
   height: 160rpx;
   border-radius: 50%;
   background: #e8e8e8;
+}
+
+.avatar-edit-hint {
+  position: absolute;
+  bottom: 30rpx;
+  right: calc(50% - 80rpx);
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .info-item {
@@ -236,6 +363,27 @@ async function handleBindPhone() {
 }
 
 .modal-btn.confirm {
+  background: #2c3e50;
+  color: #fff;
+}
+
+.sex-options {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.sex-option {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.sex-option.active {
   background: #2c3e50;
   color: #fff;
 }

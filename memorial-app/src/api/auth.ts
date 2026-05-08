@@ -1,4 +1,4 @@
-import { get, post } from './request'
+import { get, post, put } from './request'
 import type { AjaxResult } from '@/types/api'
 import type { LoginResult, UserInfo } from '@/types/user'
 
@@ -30,4 +30,9 @@ export function bindPhone(phone: string, smsCode: string) {
 /** 退出登录 */
 export function logout() {
   return post<void>('/logout')
+}
+
+/** 更新个人信息 */
+export function updateProfile(data: { nickName?: string; avatar?: string; sex?: string }) {
+  return put('/api/family/profile', data)
 }

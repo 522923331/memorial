@@ -6,6 +6,7 @@
         class="cover-img"
         :src="video.coverUrl"
         mode="aspectFill"
+        lazy-load
       />
       <view class="play-icon">
         <uni-icons type="videocam" size="30" color="#fff" />

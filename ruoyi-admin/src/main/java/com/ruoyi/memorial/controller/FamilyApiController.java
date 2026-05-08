@@ -1,6 +1,7 @@
 package com.ruoyi.memorial.controller;
 
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.SecurityUtils;
@@ -8,6 +9,7 @@ import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.memorial.domain.*;
 import com.ruoyi.memorial.service.*;
 import com.ruoyi.memorial.utils.QrCodeUtil;
+import com.ruoyi.system.service.ISysUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,9 @@ public class FamilyApiController {
 
     @Autowired
     private IStatisticsService statisticsService;
+
+    @Autowired
+    private ISysUserService userService;
 
     @Autowired
     private QrCodeUtil qrCodeUtil;
@@ -551,5 +556,39 @@ public class FamilyApiController {
             summary.add(item);
         }
         return AjaxResult.success(summary);
+    }
+
+    // ========== 个人信息 ==========
+
+    /**
+     * 更新个人信息
+     */
+    @PutMapping("/profile")
+    public AjaxResult updateProfile(@RequestBody SysUser user) {
+        Long userId = requireUserId();
+        if (userId == null) {
+            return AjaxResult.error(401, "请先登录");
+        }
+        user.setUserId(userId);
+        user.setUserName(null);
+        user.setPassword(null);
+        user.setDelFlag(null);
+        user.setStatus(null);
+        user.setLoginIp(null);
+        user.setLoginDate(null);
+        user.setCreateBy(null);
+        user.setCreateTime(null);
+        if (userService.updateUserProfile(user) > 0) {
+            SysUser updated = userService.selectUserById(userId);
+            AjaxResult ajax = AjaxResult.success();
+            ajax.put("userId", updated.getUserId());
+            ajax.put("userName", updated.getUserName());
+            ajax.put("nickName", updated.getNickName());
+            ajax.put("phonenumber", updated.getPhonenumber());
+            ajax.put("avatar", updated.getAvatar());
+            ajax.put("sex", updated.getSex());
+            return ajax;
+        }
+        return AjaxResult.error("更新失败");
     }
 }

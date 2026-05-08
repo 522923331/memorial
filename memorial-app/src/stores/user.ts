@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getToken, setToken as saveToken, removeToken } from '@/utils/auth'
 import { setStorage, getStorage, removeStorage, STORAGE_KEYS } from '@/utils/storage'
-import { wxMiniLogin, phoneLogin, getUserInfo, logout as logoutApi } from '@/api/auth'
+import { wxMiniLogin, phoneLogin, getUserInfo, logout as logoutApi, updateProfile as updateProfileApi } from '@/api/auth'
 import { getMyMemorials } from '@/api/family'
 import type { UserInfo } from '@/types/user'
 
@@ -88,6 +88,20 @@ export const useUserStore = defineStore('user', () => {
     uni.reLaunch({ url: '/pages/index/index' })
   }
 
+  async function updateProfile(data: { nickName?: string; avatar?: string; sex?: string }) {
+    const res = await updateProfileApi(data)
+    const d = (res as any)
+    if (userInfo.value) {
+      userInfo.value = {
+        ...userInfo.value,
+        nickName: d.nickName ?? userInfo.value.nickName,
+        avatar: d.avatar ?? userInfo.value.avatar,
+        sex: d.sex ?? userInfo.value.sex,
+      }
+      setStorage(STORAGE_KEYS.USER_INFO, userInfo.value)
+    }
+  }
+
   return {
     token,
     userInfo,
@@ -101,6 +115,7 @@ export const useUserStore = defineStore('user', () => {
     loginByPhone,
     fetchUserInfo,
     checkFamilyStatus,
+    updateProfile,
     logout,
   }
 })

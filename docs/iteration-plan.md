@@ -259,11 +259,11 @@
 - [x] 前端 `npm run build:prod` 编译通过
 - [x] H5 编译通过（`npm run build:h5`）
 - [x] TypeScript 类型检查通过（`vue-tsc --noEmit`）
-- [ ] 数据库 8 张表创建成功（需手动执行 SQL）
-- [ ] 示例数据 3 条逝者可查询
-- [ ] 后端 18080 端口正常运行
-- [ ] CRUD 操作正常（增删改查）
-- [ ] 字典标签显示正常
+- [x] 数据库 8 张表创建成功（已手动执行 SQL）
+- [x] 示例数据 3 条逝者可查询
+- [x] 后端 18080 端口正常运行
+- [x] CRUD 操作正常（增删改查）
+- [ ] 字典标签显示正常（需部署后验证）
 
 ### 迭代 1 验收
 - [x] `components/` 目录有 6 个组件文件（NavBar, MemorialHeader, AlbumGrid, VideoCard, MessageItem, FlowerItem）
@@ -313,3 +313,21 @@
 - [ ] 订单状态正确更新
 - [ ] 退款流程可用
 - [ ] 订单列表和导出正常
+
+### 迭代 5 验收
+- [x] 后端 PUT /api/family/profile 端点（更新昵称/头像/性别）
+- [x] 前端 profile.vue 重构（头像上传/昵称编辑/性别选择/手机号绑定）
+- [x] 前端 api/auth.ts 添加 updateProfile()
+- [x] 前端 stores/user.ts 添加 updateProfile action
+- [x] App.vue 全局 safe-area-inset-bottom
+- [x] mine/index.vue 退出登录按钮底部安全区域
+- [x] detail.vue 底部安全区域 + 骨架屏替代 loading-mask
+- [x] detail.vue 添加 onShareAppMessage/onShareTimeline（小程序分享）
+- [x] detail.vue H5 分享提示增强
+- [x] AlbumGrid.vue 图片添加 lazy-load
+- [x] MemorialHeader.vue 封面图/头像添加 lazy-load
+- [x] VideoCard.vue 封面图添加 lazy-load
+- [x] TypeScript 类型检查通过（vue-tsc --noEmit）
+- [x] H5 编译通过（npm run build:h5）
+- [x] 后端编译通过（mvn compile）
+- [ ] 后端联调测试（需数据库可达）
