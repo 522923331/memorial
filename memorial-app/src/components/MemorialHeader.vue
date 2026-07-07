@@ -24,6 +24,7 @@
         <text class="deceased-dates">
           {{ formatDisplayDate(deceased?.birthDate) }} — {{ formatDisplayDate(deceased?.deathDate) }}
         </text>
+        <text v-if="ageAtDeath !== null" class="deceased-age">享年 {{ ageAtDeath }} 岁</text>
         <text v-if="deceased?.orgName" class="deceased-org">{{ deceased.orgName }}</text>
       </view>
     </view>
@@ -49,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Deceased } from '@/types/memorial'
 
 const props = withDefaults(defineProps<{
@@ -77,6 +78,20 @@ function formatDisplayDate(dateStr?: string): string {
   // 适配 "1945-03-15" 或 "2023-11-20T00:00:00" 格式
   return dateStr.substring(0, 10)
 }
+
+const ageAtDeath = computed(() => {
+  const d = props.deceased
+  if (!d?.birthDate || !d?.deathDate) return null
+  const birth = new Date(d.birthDate)
+  const death = new Date(d.deathDate)
+  if (isNaN(birth.getTime()) || isNaN(death.getTime())) return null
+  let age = death.getFullYear() - birth.getFullYear()
+  const m = death.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) {
+    age--
+  }
+  return age >= 0 ? age : null
+})
 </script>
 
 <style scoped>
@@ -147,6 +162,12 @@ function formatDisplayDate(dateStr?: string): string {
   font-size: 26rpx;
   color: rgba(255,255,255,0.8);
   margin-top: 8rpx;
+}
+
+.deceased-age {
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.7);
+  margin-top: 4rpx;
 }
 
 .deceased-org {

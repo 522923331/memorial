@@ -1,5 +1,6 @@
 package com.ruoyi.memorial.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.domain.BaseEntity;
 import java.util.Date;
 
@@ -14,11 +15,17 @@ public class Deceased extends BaseEntity {
     private Long familyUserId;
     private String name;
     private String gender;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date birthDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private Date deathDate;
     private String cemeteryArea;
     private String cemeteryNumber;
+    private Double cemeteryLatitude;
+    private Double cemeteryLongitude;
+    private String cemeteryPhoto;
     private String bio;
+    private String monumentEraser;
     private String coverImage;
     private String qrcodeCode;
     private String qrcodeUrl;
@@ -51,8 +58,16 @@ public class Deceased extends BaseEntity {
     public void setCemeteryArea(String cemeteryArea) { this.cemeteryArea = cemeteryArea; }
     public String getCemeteryNumber() { return cemeteryNumber; }
     public void setCemeteryNumber(String cemeteryNumber) { this.cemeteryNumber = cemeteryNumber; }
+    public Double getCemeteryLatitude() { return cemeteryLatitude; }
+    public void setCemeteryLatitude(Double cemeteryLatitude) { this.cemeteryLatitude = cemeteryLatitude; }
+    public Double getCemeteryLongitude() { return cemeteryLongitude; }
+    public void setCemeteryLongitude(Double cemeteryLongitude) { this.cemeteryLongitude = cemeteryLongitude; }
+    public String getCemeteryPhoto() { return cemeteryPhoto; }
+    public void setCemeteryPhoto(String cemeteryPhoto) { this.cemeteryPhoto = cemeteryPhoto; }
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+    public String getMonumentEraser() { return monumentEraser; }
+    public void setMonumentEraser(String monumentEraser) { this.monumentEraser = monumentEraser; }
     public String getCoverImage() { return coverImage; }
     public void setCoverImage(String coverImage) { this.coverImage = coverImage; }
     public String getQrcodeCode() { return qrcodeCode; }

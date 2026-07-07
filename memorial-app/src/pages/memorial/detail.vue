@@ -45,6 +45,42 @@
         </view>
       </view>
 
+      <!-- 墓区信息 -->
+      <view v-if="hasCemeteryInfo" class="section">
+        <view class="section-title">墓区信息</view>
+        <view v-if="deceased?.cemeteryArea || deceased?.cemeteryNumber" class="cemetery-row">
+          <uni-icons type="location" size="14" color="#2c3e50" />
+          <text class="cemetery-text">
+            <text v-if="deceased?.cemeteryArea">{{ deceased.cemeteryArea }}</text>
+            <text v-if="deceased?.cemeteryArea && deceased?.cemeteryNumber"> · </text>
+            <text v-if="deceased?.cemeteryNumber">{{ deceased.cemeteryNumber }}</text>
+          </text>
+        </view>
+        <map
+          v-if="deceased?.cemeteryLatitude && deceased?.cemeteryLongitude"
+          class="cemetery-map"
+          :latitude="deceased.cemeteryLatitude"
+          :longitude="deceased.cemeteryLongitude"
+          :markers="cemeteryMarkers"
+          :scale="15"
+        />
+        <image
+          v-if="deceased?.cemeteryPhoto"
+          class="cemetery-photo"
+          :src="deceased.cemeteryPhoto"
+          mode="widthFix"
+          @tap="previewCemeteryPhoto"
+        />
+      </view>
+
+      <!-- 立碑者 -->
+      <view v-if="deceased?.monumentEraser" class="section">
+        <view class="section-title">立碑者</view>
+        <view class="monument-content">
+          <text>{{ deceased.monumentEraser }}</text>
+        </view>
+      </view>
+
       <!-- 操作按钮 -->
       <view class="action-bar">
         <view class="action-btn" @tap="goMessage">
@@ -152,6 +188,35 @@ const totalVisit = computed(() => memorialStore.totalVisit)
 const messageCount = computed(() => memorialStore.messageCount)
 const flowerCount = computed(() => memorialStore.flowerCount)
 const loading = computed(() => memorialStore.loading)
+
+const hasCemeteryInfo = computed(() => {
+  const d = deceased.value
+  if (!d) return false
+  return !!(d.cemeteryArea || d.cemeteryNumber || d.cemeteryPhoto
+    || (d.cemeteryLatitude && d.cemeteryLongitude))
+})
+
+const cemeteryMarkers = computed(() => {
+  const d = deceased.value
+  if (!d?.cemeteryLatitude || !d?.cemeteryLongitude) return []
+  return [
+    {
+      id: 1,
+      latitude: d.cemeteryLatitude,
+      longitude: d.cemeteryLongitude,
+      width: 30,
+      height: 30,
+    },
+  ]
+})
+
+function previewCemeteryPhoto() {
+  if (deceased.value?.cemeteryPhoto) {
+    uni.previewImage({
+      urls: [deceased.value.cemeteryPhoto],
+    })
+  }
+}
 
 onLoad((options) => {
   if (options?.code) {
@@ -280,6 +345,38 @@ onShareTimeline(() => ({
   padding-top: 10rpx;
   color: #2c3e50;
   font-size: 26rpx;
+}
+
+.cemetery-row {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+  color: #555;
+}
+
+.cemetery-text {
+  flex: 1;
+}
+
+.cemetery-map {
+  width: 100%;
+  height: 320rpx;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.cemetery-photo {
+  width: 100%;
+  border-radius: 12rpx;
+}
+
+.monument-content {
+  font-size: 28rpx;
+  color: #555;
+  line-height: 1.8;
+  white-space: pre-wrap;
 }
 
 .video-list {

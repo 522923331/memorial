@@ -6,21 +6,18 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.memorial.domain.Deceased;
 import com.ruoyi.memorial.domain.DeceasedAlbum;
 import com.ruoyi.memorial.service.IDeceasedAlbumService;
 import com.ruoyi.memorial.service.IDeceasedService;
+import com.ruoyi.memorial.service.OssService;
 import com.ruoyi.memorial.utils.QrCodeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -36,8 +33,8 @@ public class DeceasedController extends BaseController {
     @Autowired
     private QrCodeUtil qrCodeUtil;
 
-    @Value("${ruoyi.profile}")
-    private String profilePath;
+    @Autowired
+    private OssService ossService;
 
     @PreAuthorize("@ss.hasPermi('memorial:deceased:list')")
     @GetMapping("/list")
@@ -72,21 +69,10 @@ public class DeceasedController extends BaseController {
         String qrcodeCode = deceasedService.generateQrcodeCode();
         deceased.setQrcodeCode(qrcodeCode);
 
-        try {
-            byte[] qrBytes = qrCodeUtil.generateQrCode("/memorial/" + qrcodeCode);
-            String fileName = qrcodeCode + ".png";
-            String savePath = profilePath + "/memorial/qrcode";
-            File dir = new File(savePath);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            File qrFile = new File(savePath, fileName);
-            try (FileOutputStream fos = new FileOutputStream(qrFile)) {
-                fos.write(qrBytes);
-            }
-            deceased.setQrcodeUrl("/memorial/qrcode/" + fileName);
-        } catch (Exception e) {
-            logger.error("生成二维码失败", e);
+        Long familyUserId = deceased.getFamilyUserId() != null ? deceased.getFamilyUserId() : 0L;
+        QrCodeUtil.QrCodeResult qrResult = qrCodeUtil.generateForCode(qrcodeCode, familyUserId);
+        if (!qrResult.url().isEmpty()) {
+            deceased.setQrcodeUrl(qrResult.url());
         }
 
         deceased.setStatus("0");
@@ -117,7 +103,9 @@ public class DeceasedController extends BaseController {
     @PostMapping("/album/upload")
     public AjaxResult uploadAlbum(@RequestParam("deceasedId") Long deceasedId,
                                    @RequestParam("file") MultipartFile file) throws IOException {
-        String imageUrl = FileUploadUtils.upload(profilePath + "/memorial/album", file);
+        Deceased deceased = deceasedService.selectDeceasedById(deceasedId);
+        Long familyUserId = (deceased != null && deceased.getFamilyUserId() != null) ? deceased.getFamilyUserId() : 0L;
+        String imageUrl = ossService.upload(file, "memorial/" + familyUserId + "/album");
         DeceasedAlbum album = new DeceasedAlbum();
         album.setDeceasedId(deceasedId);
         album.setImageUrl(imageUrl);

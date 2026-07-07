@@ -8,7 +8,11 @@ export interface Deceased {
   deathDate: string
   cemeteryArea: string
   cemeteryNumber: string
+  cemeteryLatitude?: number | null
+  cemeteryLongitude?: number | null
+  cemeteryPhoto?: string
   bio: string
+  monumentEraser?: string
   coverImage: string
   qrcodeCode: string
   qrcodeUrl: string
