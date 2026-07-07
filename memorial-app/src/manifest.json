@@ -38,8 +38,12 @@
     "permission": {
       "scope.camera": {
         "desc": "用于扫描二维码访问纪念页"
+      },
+      "scope.userLocation": {
+        "desc": "用于选择墓区位置"
       }
-    }
+    },
+    "requiredPrivateInfos": ["chooseLocation", "getLocation"]
   },
   "mp-alipay": {
     "usingComponents": true
@@ -59,6 +63,13 @@
     },
     "router": {
       "mode": "hash"
+    },
+    "sdkConfigs": {
+      "maps": {
+        "qqmap": {
+          "key": ""
+        }
+      }
     }
   },
   "uniStatistics": {

@@ -20,6 +20,20 @@
         </view>
       </view>
 
+      <!-- 输入编码入口 -->
+      <view class="code-bar">
+        <uni-icons type="scan" size="16" color="#999" />
+        <input
+          class="code-input"
+          v-model="codeInput"
+          placeholder="输入编码进入纪念馆"
+          maxlength="32"
+          confirm-type="go"
+          @confirm="goByCode"
+        />
+        <view class="code-go-btn" @tap="goByCode">进入</view>
+      </view>
+
       <!-- 搜索结果 -->
       <view v-if="searchResults.length > 0" class="search-results">
         <view
@@ -95,6 +109,7 @@ import type { Deceased } from '@/types/memorial'
 const memorialStore = useMemorialStore()
 
 const keyword = ref('')
+const codeInput = ref('')
 const searchResults = ref<Deceased[]>([])
 const recentVisits = computed(() => memorialStore.recentVisits)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -143,6 +158,20 @@ function goToMemorialByCode(code: string) {
   uni.navigateTo({ url: `/pages/memorial/detail?code=${code}` })
 }
 
+function goByCode() {
+  const code = codeInput.value.trim()
+  if (!code) {
+    uni.showToast({ title: '请输入编码', icon: 'none' })
+    return
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(code)) {
+    uni.showToast({ title: '编码格式不正确', icon: 'none' })
+    return
+  }
+  codeInput.value = ''
+  uni.navigateTo({ url: `/pages/memorial/detail?code=${code}` })
+}
+
 function handleScan() {
   // #ifdef MP-WEIXIN
   uni.scanCode({
@@ -161,7 +190,7 @@ function handleScan() {
   })
   // #endif
   // #ifdef H5
-  uni.showToast({ title: '请在小程序中使用扫码功能', icon: 'none' })
+  uni.showToast({ title: '请在小程序中扫码，或使用上方编码入口', icon: 'none' })
   // #endif
 }
 
@@ -217,6 +246,33 @@ function formatTime(timestamp: number): string {
 
 .search-clear {
   padding: 4rpx;
+}
+
+.code-bar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 12rpx 12rpx 12rpx 24rpx;
+  margin-top: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.code-input {
+  flex: 1;
+  margin-left: 12rpx;
+  font-size: 26rpx;
+  height: 40rpx;
+  font-family: monospace;
+  letter-spacing: 1rpx;
+}
+
+.code-go-btn {
+  font-size: 26rpx;
+  color: #fff;
+  background: #2c3e50;
+  padding: 10rpx 28rpx;
+  border-radius: 24rpx;
 }
 
 .search-results {

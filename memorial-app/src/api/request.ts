@@ -48,10 +48,15 @@ function request<T = any>(config: RequestConfig): Promise<AjaxResult<T>> {
           resolve(result)
         } else if (result.code === 401) {
           uni.removeStorageSync('memorial_token')
-          uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
-          setTimeout(() => {
-            uni.navigateTo({ url: '/pages/login/index' })
-          }, 1500)
+          // 避免在登录页重复 push 新的登录页实例（会导致表单被清空）
+          const pages = getCurrentPages()
+          const currentRoute = pages[pages.length - 1]?.route || ''
+          if (currentRoute !== 'pages/login/index') {
+            uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+            setTimeout(() => {
+              uni.reLaunch({ url: '/pages/login/index' })
+            }, 1500)
+          }
           reject(new Error('unauthorized'))
         } else {
           uni.showToast({ title: result.msg || '请求失败', icon: 'none' })

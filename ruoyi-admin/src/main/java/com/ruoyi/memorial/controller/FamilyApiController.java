@@ -17,8 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -146,6 +144,12 @@ public class FamilyApiController {
         if (deceased.getCemeteryNumber() == null) {
             deceased.setCemeteryNumber("");
         }
+        if (deceased.getCemeteryPhoto() == null) {
+            deceased.setCemeteryPhoto("");
+        }
+        if (deceased.getMonumentEraser() == null) {
+            deceased.setMonumentEraser("");
+        }
         deceased.setStatus("0");
         deceased.setDelFlag("0");
         if (deceased.getIsPublic() == null) {
@@ -163,21 +167,9 @@ public class FamilyApiController {
         // 生成二维码编码和图片
         String qrcodeCode = deceasedService.generateQrcodeCode();
         deceased.setQrcodeCode(qrcodeCode);
-        try {
-            byte[] qrBytes = qrCodeUtil.generateQrCode("/memorial/" + qrcodeCode);
-            String fileName = qrcodeCode + ".png";
-            String savePath = profilePath + "/memorial/qrcode";
-            File dir = new File(savePath);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            File qrFile = new File(savePath, fileName);
-            try (FileOutputStream fos = new FileOutputStream(qrFile)) {
-                fos.write(qrBytes);
-            }
-            deceased.setQrcodeUrl("/memorial/qrcode/" + fileName);
-        } catch (Exception e) {
-            log.error("生成二维码失败", e);
+        QrCodeUtil.QrCodeResult qrResult = qrCodeUtil.generateForCode(qrcodeCode);
+        if (!qrResult.url().isEmpty()) {
+            deceased.setQrcodeUrl(qrResult.url());
         }
 
         int result = deceasedService.insertDeceased(deceased);
@@ -225,29 +217,17 @@ public class FamilyApiController {
         String qrcodeCode = deceasedService.generateQrcodeCode();
         deceased.setQrcodeCode(qrcodeCode);
 
-        try {
-            byte[] qrBytes = qrCodeUtil.generateQrCode("/memorial/" + qrcodeCode);
-            String fileName = qrcodeCode + ".png";
-            String savePath = profilePath + "/memorial/qrcode";
-            File dir = new File(savePath);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            File qrFile = new File(savePath, fileName);
-            try (FileOutputStream fos = new FileOutputStream(qrFile)) {
-                fos.write(qrBytes);
-            }
-            deceased.setQrcodeUrl("/memorial/qrcode/" + fileName);
-        } catch (Exception e) {
-            log.error("生成二维码失败", e);
+        QrCodeUtil.QrCodeResult qrResult = qrCodeUtil.generateForCode(qrcodeCode);
+        if (qrResult.url().isEmpty()) {
             return AjaxResult.error("生成二维码失败");
         }
+        deceased.setQrcodeUrl(qrResult.url());
 
         deceasedService.updateDeceased(deceased);
-        AjaxResult ajax = AjaxResult.success();
-        ajax.put("qrcodeUrl", deceased.getQrcodeUrl());
-        ajax.put("qrcodeCode", deceased.getQrcodeCode());
-        return ajax;
+        Map<String, Object> data = new HashMap<>();
+        data.put("qrcodeUrl", deceased.getQrcodeUrl());
+        data.put("qrcodeCode", deceased.getQrcodeCode());
+        return AjaxResult.success(data);
     }
 
     // ========== 文件上传 ==========

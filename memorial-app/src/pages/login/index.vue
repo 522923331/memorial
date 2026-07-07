@@ -67,11 +67,21 @@ const smsCode = ref('')
 const countdown = ref(0)
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
+function redirectAfterLogin() {
+  // 优先返回上一页；若无上一页（直接打开登录页），跳到「我的」tab
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack({ delta: 1 })
+  } else {
+    uni.switchTab({ url: '/pages/mine/index' })
+  }
+}
+
 // #ifdef MP-WEIXIN
 async function onWxLogin() {
   try {
     await userStore.wxLogin()
-    uni.navigateBack()
+    redirectAfterLogin()
   } catch {
     // 错误由 store 和 request 处理
   }
@@ -80,7 +90,7 @@ async function onWxLogin() {
 async function onWxLoginSimple() {
   try {
     await userStore.wxLogin()
-    uni.navigateBack()
+    redirectAfterLogin()
   } catch {
     // 错误由 store 和 request 处理
   }
@@ -99,7 +109,7 @@ async function onPhoneLogin() {
   }
   try {
     await userStore.loginByPhone(phone.value, smsCode.value)
-    uni.navigateBack()
+    redirectAfterLogin()
   } catch {
     // 错误由 store 和 request 处理
   }

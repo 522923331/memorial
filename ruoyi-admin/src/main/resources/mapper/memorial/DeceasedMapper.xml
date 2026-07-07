@@ -12,7 +12,11 @@
         <result property="deathDate" column="death_date"/>
         <result property="cemeteryArea" column="cemetery_area"/>
         <result property="cemeteryNumber" column="cemetery_number"/>
+        <result property="cemeteryLatitude" column="cemetery_latitude"/>
+        <result property="cemeteryLongitude" column="cemetery_longitude"/>
+        <result property="cemeteryPhoto" column="cemetery_photo"/>
         <result property="bio" column="bio"/>
+        <result property="monumentEraser" column="monument_eraser"/>
         <result property="coverImage" column="cover_image"/>
         <result property="qrcodeCode" column="qrcode_code"/>
         <result property="qrcodeUrl" column="qrcode_url"/>
@@ -31,7 +35,8 @@
 
     <select id="selectDeceasedList" parameterType="Deceased" resultMap="BaseResultMap">
         select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
-               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.cemetery_area, d.cemetery_number, d.cemetery_latitude, d.cemetery_longitude,
+               d.cemetery_photo, d.bio, d.monument_eraser, d.cover_image, d.qrcode_code, d.qrcode_url,
                d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
                d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
         from mem_deceased d
@@ -60,7 +65,8 @@
 
     <select id="selectDeceasedById" parameterType="Long" resultMap="BaseResultMap">
         select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
-               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.cemetery_area, d.cemetery_number, d.cemetery_latitude, d.cemetery_longitude,
+               d.cemetery_photo, d.bio, d.monument_eraser, d.cover_image, d.qrcode_code, d.qrcode_url,
                d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
                d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
         from mem_deceased d
@@ -70,7 +76,8 @@
 
     <select id="selectDeceasedByQrcode" parameterType="String" resultMap="BaseResultMap">
         select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
-               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.cemetery_area, d.cemetery_number, d.cemetery_latitude, d.cemetery_longitude,
+               d.cemetery_photo, d.bio, d.monument_eraser, d.cover_image, d.qrcode_code, d.qrcode_url,
                d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
                d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
         from mem_deceased d
@@ -80,7 +87,8 @@
 
     <select id="selectDeceasedByFamilyId" parameterType="Long" resultMap="BaseResultMap">
         select d.deceased_id, d.org_id, d.family_user_id, d.name, d.gender, d.birth_date, d.death_date,
-               d.cemetery_area, d.cemetery_number, d.bio, d.cover_image, d.qrcode_code, d.qrcode_url,
+               d.cemetery_area, d.cemetery_number, d.cemetery_latitude, d.cemetery_longitude,
+               d.cemetery_photo, d.bio, d.monument_eraser, d.cover_image, d.qrcode_code, d.qrcode_url,
                d.is_public, d.allow_message, d.message_audit, d.status, d.del_flag, d.remark,
                d.create_by, d.create_time, d.update_by, d.update_time, o.org_name
         from mem_deceased d
@@ -100,10 +108,12 @@
 
     <insert id="insertDeceased" parameterType="Deceased" useGeneratedKeys="true" keyProperty="deceasedId">
         insert into mem_deceased (org_id, family_user_id, name, gender, birth_date, death_date,
-            cemetery_area, cemetery_number, bio, cover_image, qrcode_code, qrcode_url, is_public,
+            cemetery_area, cemetery_number, cemetery_latitude, cemetery_longitude, cemetery_photo,
+            bio, monument_eraser, cover_image, qrcode_code, qrcode_url, is_public,
             allow_message, message_audit, status, del_flag, remark, create_by, create_time)
         values (#{orgId}, #{familyUserId}, #{name}, #{gender}, #{birthDate}, #{deathDate},
-            #{cemeteryArea}, #{cemeteryNumber}, #{bio}, #{coverImage}, #{qrcodeCode}, #{qrcodeUrl}, #{isPublic},
+            #{cemeteryArea}, #{cemeteryNumber}, #{cemeteryLatitude}, #{cemeteryLongitude}, #{cemeteryPhoto},
+            #{bio}, #{monumentEraser}, #{coverImage}, #{qrcodeCode}, #{qrcodeUrl}, #{isPublic},
             #{allowMessage}, #{messageAudit}, #{status}, #{delFlag}, #{remark}, #{createBy}, #{createTime})
     </insert>
 
@@ -118,7 +128,11 @@
             <if test="deathDate != null">death_date = #{deathDate},</if>
             <if test="cemeteryArea != null">cemetery_area = #{cemeteryArea},</if>
             <if test="cemeteryNumber != null">cemetery_number = #{cemeteryNumber},</if>
+            <if test="cemeteryLatitude != null">cemetery_latitude = #{cemeteryLatitude},</if>
+            <if test="cemeteryLongitude != null">cemetery_longitude = #{cemeteryLongitude},</if>
+            <if test="cemeteryPhoto != null">cemetery_photo = #{cemeteryPhoto},</if>
             <if test="bio != null">bio = #{bio},</if>
+            <if test="monumentEraser != null">monument_eraser = #{monumentEraser},</if>
             <if test="coverImage != null">cover_image = #{coverImage},</if>
             <if test="qrcodeCode != null">qrcode_code = #{qrcodeCode},</if>
             <if test="qrcodeUrl != null">qrcode_url = #{qrcodeUrl},</if>

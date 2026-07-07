@@ -19,8 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -72,21 +70,9 @@ public class DeceasedController extends BaseController {
         String qrcodeCode = deceasedService.generateQrcodeCode();
         deceased.setQrcodeCode(qrcodeCode);
 
-        try {
-            byte[] qrBytes = qrCodeUtil.generateQrCode("/memorial/" + qrcodeCode);
-            String fileName = qrcodeCode + ".png";
-            String savePath = profilePath + "/memorial/qrcode";
-            File dir = new File(savePath);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            File qrFile = new File(savePath, fileName);
-            try (FileOutputStream fos = new FileOutputStream(qrFile)) {
-                fos.write(qrBytes);
-            }
-            deceased.setQrcodeUrl("/memorial/qrcode/" + fileName);
-        } catch (Exception e) {
-            logger.error("生成二维码失败", e);
+        QrCodeUtil.QrCodeResult qrResult = qrCodeUtil.generateForCode(qrcodeCode);
+        if (!qrResult.url().isEmpty()) {
+            deceased.setQrcodeUrl(qrResult.url());
         }
 
         deceased.setStatus("0");
