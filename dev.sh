@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # 一键编译并启动后端 + 前端 + 管理后台
-# 用法: ./dev.sh
+# 用法:
+#   ./dev.sh          前台运行（Ctrl+C 停止所有服务）
+#   ./dev.sh -d       后台运行（关掉终端不退出），日志: /tmp/memorial-dev.log
+#   ./dev.sh stop     停止后台运行的服务
+#   ./dev.sh status   查看运行状态
 # 环境变量覆盖（可选）: JAVA_HOME, MVN_BIN
-# Ctrl+C 停止所有服务
+# 首次启动会自动检测并安装前端依赖（npm install）
 
 set -e
 
@@ -12,6 +16,8 @@ BACKEND_LOG="/tmp/memorial-backend.log"
 FRONTEND_LOG="/tmp/memorial-frontend.log"
 ADMIN_LOG="/tmp/memorial-admin.log"
 BUILD_LOG="/tmp/memorial-build.log"
+DEV_LOG="/tmp/memorial-dev.log"
+PID_FILE="/tmp/memorial-dev.pid"
 BACKEND_PORT=18080
 FRONTEND_PORT=5173
 ADMIN_PORT=8008
@@ -47,9 +53,23 @@ get_local_ip() {
     local ip
     ip=$(hostname -I 2>/dev/null | awk '{print $1}')
     [ -n "$ip" ] && { echo "$ip"; return; }
-    ip=$(ipconfig getifaddr en0 2>/dev/null)
+    ip=$(ipconfig getifaddr en0 2>/dev/null || true)
     [ -n "$ip" ] && { echo "$ip"; return; }
     echo "localhost"
+}
+
+# 确保前端依赖已安装（node_modules 被 .gitignore 忽略，新机器需 npm install）
+ensure_npm_deps() {
+    local dir=$1 name=$2 bin=$3
+    if [ ! -x "$dir/node_modules/.bin/$bin" ]; then
+        echo "[$(ts)]     $name 缺少依赖（未找到 node_modules/.bin/$bin）"
+        echo "[$(ts)]     ==> 执行 npm install（首次较慢，可能数分钟）..."
+        (cd "$dir" && npm install --no-audit --no-fund) || {
+            echo "[$(ts)]     ✗ $name npm install 失败"
+            exit 1
+        }
+        echo "[$(ts)]     ✓ $name 依赖安装完成"
+    fi
 }
 
 # 检查 Java 版本 >= 17（pom.xml 要求 java.version=17）
@@ -165,9 +185,120 @@ cleanup() {
     lsof -ti :$BACKEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
     lsof -ti :$FRONTEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
     lsof -ti :$ADMIN_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+    rm -f "$PID_FILE" 2>/dev/null || true
     echo "[$(ts)]     已停止 (总运行时长 $(fmt_duration $SECONDS))"
     exit 0
 }
+
+# 停止后台运行的服务（./dev.sh stop）
+stop_running() {
+    local pid
+    if [ -f "$PID_FILE" ]; then
+        pid=$(cat "$PID_FILE" 2>/dev/null || true)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "[$(ts)] ==> 停止后台服务 (PID=$pid)..."
+            kill -TERM "$pid" 2>/dev/null || true
+            for i in $(seq 1 20); do
+                kill -0 "$pid" 2>/dev/null || break
+                sleep 0.5
+            done
+            if kill -0 "$pid" 2>/dev/null; then
+                echo "[$(ts)]     未退出，强制 kill -9"
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+            rm -f "$PID_FILE"
+            echo "[$(ts)]     ✓ 已停止"
+            return 0
+        fi
+        rm -f "$PID_FILE"
+    fi
+    echo "[$(ts)]     未找到运行记录，按端口清理残留进程..."
+    local killed=false p
+    for p in $BACKEND_PORT $FRONTEND_PORT $ADMIN_PORT; do
+        if lsof -ti :$p >/dev/null 2>&1; then
+            lsof -ti :$p | xargs kill -9 2>/dev/null || true
+            killed=true
+        fi
+    done
+    [ "$killed" = "true" ] && echo "[$(ts)]     ✓ 已清理端口残留" || echo "[$(ts)]     无运行中的服务"
+}
+
+# 查看运行状态（./dev.sh status）
+show_status() {
+    local pid
+    if [ -f "$PID_FILE" ]; then
+        pid=$(cat "$PID_FILE" 2>/dev/null || true)
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "[$(ts)] 运行中 (主进程 PID=$pid)"
+            echo "       日志: tail -f $DEV_LOG"
+        else
+            echo "[$(ts)] 未运行（PID 文件已过期，已清理）"
+            rm -f "$PID_FILE"
+        fi
+    else
+        echo "[$(ts)] 未运行（无 PID 文件）"
+    fi
+    echo ""
+    echo "端口监听:"
+    local p who
+    for p in $BACKEND_PORT $FRONTEND_PORT $ADMIN_PORT; do
+        who=$(lsof -ti :$p 2>/dev/null || true)
+        if [ -n "$who" ]; then
+            echo "  :$p  ✓ 监听中 (PID $who)"
+        else
+            echo "  :$p  ✗ 未监听"
+        fi
+    done
+}
+
+# ========== 参数解析 ==========
+MODE="foreground"
+case "${1:-}" in
+    -d|--detach|--daemon) MODE="daemon" ;;
+    --detached) MODE="detached" ;;   # 内部：被 daemon 启动器重新调用
+    stop)   trap - INT TERM EXIT; stop_running; exit 0 ;;
+    status) trap - INT TERM EXIT; show_status; exit 0 ;;
+    -h|--help)
+        echo "用法:"
+        echo "  ./dev.sh          前台运行（Ctrl+C 停止所有服务）"
+        echo "  ./dev.sh -d       后台运行（关掉终端不退出）"
+        echo "  ./dev.sh stop     停止后台运行的服务"
+        echo "  ./dev.sh status   查看运行状态"
+        exit 0
+        ;;
+    "") MODE="foreground" ;;
+    *) echo "未知参数: $1（用法: ./dev.sh [-d|stop|status]）"; exit 1 ;;
+esac
+
+# daemon 启动器：后台重新调用自己为 --detached，然后直接退出（不触发 cleanup）
+if [ "$MODE" = "daemon" ]; then
+    trap - INT TERM EXIT
+    : > "$DEV_LOG"
+    if command -v setsid >/dev/null 2>&1; then
+        setsid bash "$0" --detached >> "$DEV_LOG" 2>&1 < /dev/null &
+    else
+        nohup bash "$0" --detached >> "$DEV_LOG" 2>&1 < /dev/null &
+        disown 2>/dev/null || true
+    fi
+    DAEMON_PID=$!
+    echo "$DAEMON_PID" > "$PID_FILE"
+    sleep 2
+    if kill -0 "$DAEMON_PID" 2>/dev/null; then
+        echo "[$(ts)] ✓ 已后台启动 (PID=$DAEMON_PID)"
+        echo "       日志:   tail -f $DEV_LOG"
+        echo "       停止:   ./dev.sh stop"
+        echo "       状态:   ./dev.sh status"
+    else
+        echo "[$(ts)] ✗ 后台启动失败，日志末尾:"
+        tail -20 "$DEV_LOG" 2>/dev/null
+        rm -f "$PID_FILE"
+        exit 1
+    fi
+    exit 0
+fi
+# MODE=detached 或 foreground：继续正常流程
+
+# 仅服务模式注册 cleanup（-h/stop/status/未知参数已在前 exit，不会误杀端口占用者）
 trap cleanup INT TERM EXIT
 
 # ========== 检测环境 ==========
@@ -263,6 +394,7 @@ fi
 echo ""
 echo "[$(ts)] ==> [3/4] 启动前端 (memorial-app H5)..."
 cd "$FRONTEND_DIR"
+ensure_npm_deps "$FRONTEND_DIR" "memorial-app" "uni"
 : > "$FRONTEND_LOG"
 # 显式 --host 0.0.0.0 让 H5 可被外网访问（uni 默认只绑 localhost）
 nohup npx uni --host $FRONTEND_HOST --port $FRONTEND_PORT > "$FRONTEND_LOG" 2>&1 &
@@ -303,6 +435,7 @@ fi
 echo ""
 echo "[$(ts)] ==> [4/4] 启动管理后台 (ruoyi-ui)..."
 cd "$ADMIN_DIR"
+ensure_npm_deps "$ADMIN_DIR" "ruoyi-ui" "vue-cli-service"
 if lsof -ti :$ADMIN_PORT >/dev/null 2>&1; then
     echo "[$(ts)]     端口 $ADMIN_PORT 被占用，先停止旧进程"
     lsof -ti :$ADMIN_PORT | xargs kill -9 2>/dev/null || true
@@ -360,5 +493,11 @@ echo "  Ctrl+C 停止所有服务"
 echo "=========================================="
 echo ""
 
-# 前台 tail 前端日志，Ctrl+C 触发 cleanup
-tail -f "$FRONTEND_LOG"
+if [ "$MODE" = "detached" ]; then
+    # 后台守护模式：阻塞等待 ./dev.sh stop 发来的 SIGTERM，由 trap cleanup 收尾
+    echo "[$(ts)] ==> 后台运行中，等待 ./dev.sh stop"
+    while true; do sleep 3600 || true; done
+else
+    # 前台模式：tail 前端日志，Ctrl+C 触发 cleanup
+    tail -f "$FRONTEND_LOG"
+fi
