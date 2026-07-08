@@ -1,7 +1,7 @@
 <template>
   <view class="page">
     <view class="login-header">
-      <image class="logo" src="/static/images/logo.png" mode="aspectFit" />
+      <image class="logo" src="/static/images/memoriallogo.png" mode="aspectFit" />
       <text class="app-name">云上纪念</text>
       <text class="app-desc">缅怀至亲，铭记于心</text>
     </view>

@@ -1,6 +1,7 @@
 <template>
   <div class="login">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form">
+      <img src="@/assets/logo/memorial_logo.svg" class="login-logo" alt="logo">
       <h3 class="title">{{title}}</h3>
       <el-form-item prop="username">
         <el-input
@@ -171,6 +172,12 @@ export default {
   margin: 0px auto 30px auto;
   text-align: center;
   color: #707070;
+}
+.login-logo {
+  width: 80px;
+  height: 80px;
+  display: block;
+  margin: 0 auto 20px auto;
 }
 
 .login-form {
