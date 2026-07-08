@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 一键编译并启动后端 + 前端
+# 一键编译并启动后端 + 前端 + 管理后台
 # 用法: ./dev.sh
 # 环境变量覆盖（可选）: JAVA_HOME, MVN_BIN
 # Ctrl+C 停止所有服务
@@ -10,12 +10,18 @@ PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_JAR="$PROJECT_ROOT/ruoyi-admin/target/ruoyi-admin.jar"
 BACKEND_LOG="/tmp/memorial-backend.log"
 FRONTEND_LOG="/tmp/memorial-frontend.log"
+ADMIN_LOG="/tmp/memorial-admin.log"
 BUILD_LOG="/tmp/memorial-build.log"
 BACKEND_PORT=18080
+FRONTEND_PORT=5173
+ADMIN_PORT=8008
+FRONTEND_HOST=0.0.0.0
 FRONTEND_DIR="$PROJECT_ROOT/memorial-app"
+ADMIN_DIR="$PROJECT_ROOT/ruoyi-ui"
 
 BACKEND_PID=""
 FRONTEND_PID=""
+ADMIN_PID=""
 SCRIPT_START=$SECONDS
 CLEANING=false
 
@@ -33,6 +39,17 @@ fmt_duration() {
 # 解析符号链接到真实路径（macOS 和 Linux 通用）
 real_path() {
     realpath "$1" 2>/dev/null || readlink -f "$1" 2>/dev/null || echo "$1"
+}
+
+# 获取本机网卡 IP（用于打印访问地址；取不到则回退 localhost）
+# 注：云服务器上通常返回内网 IP，外网访问需替换为服务器公网 IP
+get_local_ip() {
+    local ip
+    ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    [ -n "$ip" ] && { echo "$ip"; return; }
+    ip=$(ipconfig getifaddr en0 2>/dev/null)
+    [ -n "$ip" ] && { echo "$ip"; return; }
+    echo "localhost"
 }
 
 # 检查 Java 版本 >= 17（pom.xml 要求 java.version=17）
@@ -143,8 +160,11 @@ cleanup() {
     echo ""
     echo "[$(ts)] ==> 停止所有服务..."
     kill_tree "$FRONTEND_PID"
+    kill_tree "$ADMIN_PID"
     kill_tree "$BACKEND_PID"
     lsof -ti :$BACKEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+    lsof -ti :$FRONTEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+    lsof -ti :$ADMIN_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
     echo "[$(ts)]     已停止 (总运行时长 $(fmt_duration $SECONDS))"
     exit 0
 }
@@ -168,9 +188,9 @@ MVN_BIN=$(detect_mvn) || {
 }
 echo "[$(ts)]     MVN_BIN   = $MVN_BIN"
 
-# ========== [1/3] 编译后端 ==========
+# ========== [1/4] 编译后端 ==========
 echo ""
-echo "[$(ts)] ==> [1/3] 编译后端 (mvn package)..."
+echo "[$(ts)] ==> [1/4] 编译后端 (mvn package)..."
 echo "[$(ts)]     命令: JAVA_HOME=$JAVA_HOME_DIR $MVN_BIN -pl ruoyi-admin -am package -DskipTests -B"
 echo "[$(ts)]     提示: 首次构建需下载依赖，可能 5-15 分钟；后续构建约 30 秒"
 echo "[$(ts)]     构建日志同时写入: $BUILD_LOG"
@@ -193,9 +213,9 @@ if [ ! -f "$BACKEND_JAR" ]; then
 fi
 echo "[$(ts)]     ✓ 编译完成 (用时 $(fmt_duration $((BUILD_END-BUILD_START))))"
 
-# ========== [2/3] 启动后端 ==========
+# ========== [2/4] 启动后端 ==========
 echo ""
-echo "[$(ts)] ==> [2/3] 启动后端..."
+echo "[$(ts)] ==> [2/4] 启动后端..."
 if lsof -ti :$BACKEND_PORT >/dev/null 2>&1; then
     echo "[$(ts)]     端口 $BACKEND_PORT 被占用，先停止旧进程"
     lsof -ti :$BACKEND_PORT | xargs kill -9 2>/dev/null || true
@@ -239,12 +259,13 @@ if [ "$READY" != "true" ]; then
     exit 1
 fi
 
-# ========== [3/3] 启动前端 ==========
+# ========== [3/4] 启动前端 ==========
 echo ""
-echo "[$(ts)] ==> [3/3] 启动前端 (memorial-app H5)..."
+echo "[$(ts)] ==> [3/4] 启动前端 (memorial-app H5)..."
 cd "$FRONTEND_DIR"
 : > "$FRONTEND_LOG"
-nohup npm run dev:h5 > "$FRONTEND_LOG" 2>&1 &
+# 显式 --host 0.0.0.0 让 H5 可被外网访问（uni 默认只绑 localhost）
+nohup npx uni --host $FRONTEND_HOST --port $FRONTEND_PORT > "$FRONTEND_LOG" 2>&1 &
 FRONTEND_PID=$!
 echo "[$(ts)]     前端 PID=$FRONTEND_PID"
 echo "[$(ts)]     日志: $FRONTEND_LOG"
@@ -278,14 +299,63 @@ if [ "$FE_READY" != "true" ]; then
     echo "[$(ts)]     ! 前端 30s 内未检测到就绪标志，继续 tail 日志（可能仍在启动）"
 fi
 
+# ========== [4/4] 启动管理后台 ==========
+echo ""
+echo "[$(ts)] ==> [4/4] 启动管理后台 (ruoyi-ui)..."
+cd "$ADMIN_DIR"
+if lsof -ti :$ADMIN_PORT >/dev/null 2>&1; then
+    echo "[$(ts)]     端口 $ADMIN_PORT 被占用，先停止旧进程"
+    lsof -ti :$ADMIN_PORT | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
+: > "$ADMIN_LOG"
+# vue.config.js 已配置 devServer.host=0.0.0.0，管理后台默认即可外网访问
+nohup npm run dev > "$ADMIN_LOG" 2>&1 &
+ADMIN_PID=$!
+echo "[$(ts)]     管理后台 PID=$ADMIN_PID"
+echo "[$(ts)]     日志: $ADMIN_LOG"
+echo "[$(ts)]     等待管理后台就绪 (最多 60s)..."
+
+ADMIN_READY=false
+for i in $(seq 1 60); do
+    if grep -qE "App running at|Compiled successfully" "$ADMIN_LOG" 2>/dev/null; then
+        echo ""
+        echo "[$(ts)]     ✓ 管理后台就绪 (用时 ${i}s)"
+        ADMIN_READY=true
+        break
+    fi
+    if grep -qE "Failed to compile|ELIFECYCLE" "$ADMIN_LOG" 2>/dev/null; then
+        echo ""
+        echo "[$(ts)]     ✗ 管理后台启动失败，最后 20 行日志:"
+        tail -20 "$ADMIN_LOG"
+        exit 1
+    fi
+    if [ $((i % 10)) -eq 0 ]; then
+        local_last=$(tail -1 "$ADMIN_LOG" 2>/dev/null)
+        echo ""
+        echo "[$(ts)]     [${i}s] $local_last"
+    else
+        printf "."
+    fi
+    sleep 1
+done
+if [ "$ADMIN_READY" != "true" ]; then
+    echo ""
+    echo "[$(ts)]     ! 管理后台 60s 内未检测到就绪标志，继续 tail 日志（可能仍在启动）"
+fi
+
 echo ""
 echo "=========================================="
 echo "  启动完成 (总用时 $(fmt_duration $SECONDS))"
-echo "  后端 API:  http://localhost:$BACKEND_PORT"
-echo "  前端 H5:   见下方日志 (默认 http://localhost:5173)"
-echo "  后端日志:  tail -f $BACKEND_LOG"
-echo "  前端日志:  tail -f $FRONTEND_LOG"
-echo "  构建日志:  $BUILD_LOG"
+LOCAL_IP=$(get_local_ip)
+echo "  后端 API:    http://$LOCAL_IP:$BACKEND_PORT"
+echo "  前端 H5:     http://$LOCAL_IP:$FRONTEND_PORT"
+echo "  管理后台:    http://$LOCAL_IP:$ADMIN_PORT"
+echo "  (若 $LOCAL_IP 为内网地址，外网访问请替换为服务器公网 IP)"
+echo "  后端日志:    tail -f $BACKEND_LOG"
+echo "  前端日志:    tail -f $FRONTEND_LOG"
+echo "  管理后台日志: tail -f $ADMIN_LOG"
+echo "  构建日志:    $BUILD_LOG"
 echo "  Ctrl+C 停止所有服务"
 echo "=========================================="
 echo ""
