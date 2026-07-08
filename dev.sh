@@ -3,6 +3,7 @@
 # 用法:
 #   ./dev.sh          前台运行（Ctrl+C 停止所有服务）
 #   ./dev.sh -d       后台运行（关掉终端不退出），日志: /tmp/memorial-dev.log
+#   ./dev.sh -c       强制 clean 重新编译后端（代码改了没生效时用，可与 -d 组合）
 #   ./dev.sh stop     停止后台运行的服务
 #   ./dev.sh status   查看运行状态
 # 环境变量覆盖（可选）: JAVA_HOME, MVN_BIN
@@ -62,7 +63,7 @@ get_local_ip() {
 ensure_npm_deps() {
     local dir=$1 name=$2 bin=$3
     if [ ! -x "$dir/node_modules/.bin/$bin" ]; then
-        echo "[$(ts)]     $name 缺少依赖（未找到 node_modules/.bin/$bin）"
+        echo "[$(ts)]     $name 缺少依赖（未找到 node_modules/.bin/${bin}）"
         echo "[$(ts)]     ==> 执行 npm install（首次较慢，可能数分钟）..."
         (cd "$dir" && npm install --no-audit --no-fund) || {
             echo "[$(ts)]     ✗ $name npm install 失败"
@@ -253,31 +254,39 @@ show_status() {
 
 # ========== 参数解析 ==========
 MODE="foreground"
-case "${1:-}" in
-    -d|--detach|--daemon) MODE="daemon" ;;
-    --detached) MODE="detached" ;;   # 内部：被 daemon 启动器重新调用
-    stop)   trap - INT TERM EXIT; stop_running; exit 0 ;;
-    status) trap - INT TERM EXIT; show_status; exit 0 ;;
-    -h|--help)
-        echo "用法:"
-        echo "  ./dev.sh          前台运行（Ctrl+C 停止所有服务）"
-        echo "  ./dev.sh -d       后台运行（关掉终端不退出）"
-        echo "  ./dev.sh stop     停止后台运行的服务"
-        echo "  ./dev.sh status   查看运行状态"
-        exit 0
-        ;;
-    "") MODE="foreground" ;;
-    *) echo "未知参数: $1（用法: ./dev.sh [-d|stop|status]）"; exit 1 ;;
-esac
+DO_CLEAN=false
+for arg in "$@"; do
+    case "$arg" in
+        -d|--detach|--daemon) MODE="daemon" ;;
+        --detached) MODE="detached" ;;   # 内部：被 daemon 启动器重新调用
+        -c|--clean) DO_CLEAN=true ;;     # 强制 mvn clean package 全量重编译
+        stop)   trap - INT TERM EXIT; stop_running; exit 0 ;;
+        status) trap - INT TERM EXIT; show_status; exit 0 ;;
+        -h|--help)
+            echo "用法: ./dev.sh [选项]   （默认前台运行，Ctrl+C 停止所有服务）"
+            echo "选项:"
+            echo "  -d, --detach    后台运行（关掉终端不退出）"
+            echo "  -c, --clean     强制 clean 重新编译后端（代码改了没生效时用）"
+            echo "  stop            停止后台运行的服务"
+            echo "  status          查看运行状态"
+            echo "组合示例:"
+            echo "  ./dev.sh -d -c    后台运行 + 强制重编译"
+            exit 0
+            ;;
+        *) echo "未知参数: ${arg}（用法: ./dev.sh [-d|-c|stop|status]）"; exit 1 ;;
+    esac
+done
 
 # daemon 启动器：后台重新调用自己为 --detached，然后直接退出（不触发 cleanup）
 if [ "$MODE" = "daemon" ]; then
     trap - INT TERM EXIT
     : > "$DEV_LOG"
+    CLEAN_FLAG=""
+    [ "$DO_CLEAN" = "true" ] && CLEAN_FLAG="--clean"
     if command -v setsid >/dev/null 2>&1; then
-        setsid bash "$0" --detached >> "$DEV_LOG" 2>&1 < /dev/null &
+        setsid bash "$0" --detached $CLEAN_FLAG >> "$DEV_LOG" 2>&1 < /dev/null &
     else
-        nohup bash "$0" --detached >> "$DEV_LOG" 2>&1 < /dev/null &
+        nohup bash "$0" --detached $CLEAN_FLAG >> "$DEV_LOG" 2>&1 < /dev/null &
         disown 2>/dev/null || true
     fi
     DAEMON_PID=$!
@@ -321,14 +330,20 @@ echo "[$(ts)]     MVN_BIN   = $MVN_BIN"
 
 # ========== [1/4] 编译后端 ==========
 echo ""
-echo "[$(ts)] ==> [1/4] 编译后端 (mvn package)..."
-echo "[$(ts)]     命令: JAVA_HOME=$JAVA_HOME_DIR $MVN_BIN -pl ruoyi-admin -am package -DskipTests -B"
-echo "[$(ts)]     提示: 首次构建需下载依赖，可能 5-15 分钟；后续构建约 30 秒"
+if [ "$DO_CLEAN" = "true" ]; then
+    MVN_GOAL="clean package"
+    echo "[$(ts)] ==> [1/4] 编译后端 (mvn clean package，强制全量重编译)..."
+else
+    MVN_GOAL="package"
+    echo "[$(ts)] ==> [1/4] 编译后端 (mvn package)..."
+fi
+echo "[$(ts)]     命令: JAVA_HOME=$JAVA_HOME_DIR $MVN_BIN -pl ruoyi-admin -am $MVN_GOAL -DskipTests -B"
+echo "[$(ts)]     提示: 首次构建需下载依赖，可能 5-15 分钟；后续约 30 秒（-c 全量重编译较慢）"
 echo "[$(ts)]     构建日志同时写入: $BUILD_LOG"
 echo "[$(ts)]     --- Maven 输出开始 ---"
 
 BUILD_START=$SECONDS
-JAVA_HOME=$JAVA_HOME_DIR "$MVN_BIN" -pl ruoyi-admin -am package -DskipTests -B 2>&1 | tee "$BUILD_LOG"
+JAVA_HOME=$JAVA_HOME_DIR "$MVN_BIN" -pl ruoyi-admin -am $MVN_GOAL -DskipTests -B 2>&1 | tee "$BUILD_LOG"
 MVN_EXIT=${PIPESTATUS[0]}
 BUILD_END=$SECONDS
 
