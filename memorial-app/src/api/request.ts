@@ -1,7 +1,14 @@
 import { getToken } from '@/utils/auth'
 import type { AjaxResult } from '@/types/api'
 
+// H5 走 vite proxy（同源，避免浏览器 CORS，见 vite.config.ts 的 server.proxy）
+// 小程序/App 没有 dev server，需用完整后端地址（见 .env 的 VITE_API_BASE_URL）
+// #ifdef H5
+const BASE_URL = ''
+// #endif
+// #ifndef H5
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+// #endif
 const TIMEOUT = 15000
 
 interface RequestConfig {
