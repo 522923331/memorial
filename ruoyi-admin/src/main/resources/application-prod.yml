@@ -1,0 +1,16 @@
+# 生产环境配置（Linux + nginx 部署）
+# 激活方式：spring.profiles.active 含 prod（dev.sh prod 模式 --spring.profiles.active=prod,druid）
+#
+# 与开发的差异：
+# - ECS 在阿里云 VPC，OSS 用内网 endpoint 上传（免公网流量费）
+# - 前端查看图片走 nginx /oss 反代内网 OSS（免公网流量费）
+# - H5 走 nginx 80
+memorial:
+  qrcode:
+    # 二维码扫码跳转 H5；换服务器公网 IP 时改 SERVER_PUBLIC_IP 环境变量，或直接改这里
+    h5-base-url: http://${SERVER_PUBLIC_IP:8.140.249.192}
+  oss:
+    # 内网 endpoint：后端上传走 ECS 内网，免公网流量费
+    endpoint: https://oss-cn-beijing-internal.aliyuncs.com
+    # 前端查看走 nginx /oss 反代（nginx 在 ECS，内网回源 OSS），免公网流量费
+    url-prefix: http://${SERVER_PUBLIC_IP:8.140.249.192}/oss

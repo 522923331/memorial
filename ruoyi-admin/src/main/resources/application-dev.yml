@@ -1,0 +1,17 @@
+# 开发环境配置（Mac 本地 / Linux dev 模式）
+# 激活方式：spring.profiles.active 含 dev（application.yml 默认 dev,druid；dev.sh dev 模式用此）
+#
+# 与生产的差异：
+# - 开发机通常不在阿里云 VPC，访问不了 OSS 内网 endpoint，故 endpoint 用公网域名
+# - dev 模式不跑 nginx，前端查看图片直连 OSS 公网域名（<image src> 不受 CORS 限制）
+# - H5 走 Vite dev server 5173
+memorial:
+  qrcode:
+    # 本地开发默认 localhost:5173；在 Linux 上用 dev 模式测扫码时：
+    #   export H5_BASE_URL=http://服务器公网IP:5173
+    h5-base-url: ${H5_BASE_URL:http://localhost:5173}
+  oss:
+    # 公网 endpoint：开发机上传到 OSS 走公网（开发量小，可接受）
+    endpoint: https://oss-cn-beijing.aliyuncs.com
+    # 前端直连 OSS 公网域名查看图片（dev 模式无 nginx /oss 反代）
+    url-prefix: https://memorials.oss-cn-beijing.aliyuncs.com

@@ -314,9 +314,9 @@ scp -r ruoyi-ui/dist/* root@服务器IP:/usr/share/nginx/html/admin/
 
 | server | location | 目标 | proxy_pass 尾斜杠 | 说明 |
 |--------|----------|------|------------------|------|
-| H5 `:443` | `/` | H5 静态产物 | — | hash 路由 |
-| H5 `:443` | `/api/` | `127.0.0.1:18080` | **不带**（保留 `/api` 前缀）| 后端 `@RequestMapping("/api/...")` |
-| H5 `:443` | `/oss/` | OSS 内网 endpoint | **带**（去掉 `/oss` 前缀）| 文件查看/下载，走内网 |
+| H5 `:80/443` | `/` | H5 静态产物 | — | hash 路由 |
+| H5 `:80/443` | `/api/` | `127.0.0.1:18080` | **不带**（保留 `/api` 前缀）| 后端 `@RequestMapping("/api/...")` |
+| H5 `:80/443` | `/oss/` | OSS 内网 endpoint | **带**（去掉 `/oss` 前缀）| 文件查看/下载，走内网 |
 | admin `:8080` | `/` | admin 静态产物 | — | history 路由，需 `try_files` |
 | admin `:8080` | `/prod-api/` | `127.0.0.1:18080` | **带**（去掉 `/prod-api` 前缀）| 后端 `/system/...`、`/memorial/...` |
 | admin `:8080` | `/oss/` | OSS 内网 endpoint | **带** | 与 H5 一致，保持 server 自洽 |
@@ -326,7 +326,111 @@ scp -r ruoyi-ui/dist/* root@服务器IP:/usr/share/nginx/html/admin/
 > - `/prod-api/` → `proxy_pass http://127.0.0.1:18080/;`（**带 /**）：`/prod-api/system/user` → 后端 `/system/user`。
 > - `/oss/` → `proxy_pass https://memorials.oss-...internal.aliyuncs.com/;`（**带 /**）：`/oss/memorial/x.jpg` → OSS `/memorial/x.jpg`。
 
-### 5.2 完整配置
+### 5.2 完整配置（按场景选）
+
+> 暂无域名用 **5.2.1 IP 版**（HTTP）；申请到域名后用 **5.2.2 域名版**（HTTPS）。两套之间切换只改 nginx 配置 + `url-prefix`/`h5-base-url` + 旧数据 SQL，业务代码不动。
+
+#### 5.2.1 无域名（IP）版 —— 暂无域名时用这套
+
+以服务器 IP `8.140.249.192` 为例（换成你的实际公网 IP）。纯 HTTP，无需 SSL 证书。
+
+> ⚠️ `url-prefix`/`h5-base-url` 必须用**公网 IP**，不能用 `127.0.0.1`：前端在浏览器/手机上，访问 `127.0.0.1` 会指向用户自己的设备，图片打不开、扫码跳转失败。只有 nginx `proxy_pass` 到后端那一步用 `127.0.0.1:18080` 是对的（nginx 与后端同机）。
+
+`/etc/nginx/conf.d/memorial.conf`：
+
+```nginx
+# =========================================================
+# H5 前端（HTTP 80，浏览器主入口）
+# =========================================================
+server {
+    listen 80;
+    server_name _;                    # 匹配 IP 访问
+    client_max_body_size 100m;        # 上传上限，需 ≥ 后端 multipart 限制
+
+    # ① H5 静态产物（hash 路由）
+    location / {
+        root /usr/share/nginx/html/h5;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # ② H5 / 小程序 后端 API（保留 /api 前缀，proxy_pass 不带尾斜杠）
+    location /api/ {
+        proxy_pass http://127.0.0.1:18080;
+        proxy_set_header Host              $http_host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    }
+
+    # ③ OSS 文件查看/下载（nginx 走内网 endpoint，免公网流量费）
+    location /oss/ {
+        proxy_pass https://memorials.oss-cn-beijing-internal.aliyuncs.com/;
+        proxy_set_header Host              memorials.oss-cn-beijing-internal.aliyuncs.com;  # 必须，OSS 按 Host 路由 bucket
+        proxy_ssl_server_name on;          # SNI，否则 OSS 可能拒绝握手
+    }
+
+    gzip on;
+    gzip_min_length 1k;
+    gzip_comp_level 6;
+    gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/json image/svg+xml;
+    gzip_vary on;
+}
+
+# =========================================================
+# 管理后台（HTTP 8080）
+# =========================================================
+server {
+    listen 8080;
+    server_name _;
+    client_max_body_size 100m;
+
+    # ① admin 静态产物（history 路由，必须 try_files）
+    location / {
+        root /usr/share/nginx/html/admin;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # ② 管理后台后端 API（去掉 /prod-api 前缀，proxy_pass 带尾斜杠）
+    location /prod-api/ {
+        proxy_pass http://127.0.0.1:18080/;
+        proxy_set_header Host              $http_host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    }
+
+    # ③ OSS 文件查看（与 H5 一致）
+    location /oss/ {
+        proxy_pass https://memorials.oss-cn-beijing-internal.aliyuncs.com/;
+        proxy_set_header Host              memorials.oss-cn-beijing-internal.aliyuncs.com;
+        proxy_ssl_server_name on;
+    }
+
+    gzip on;
+    gzip_min_length 1k;
+    gzip_comp_level 6;
+    gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/json image/svg+xml;
+    gzip_vary on;
+}
+```
+
+配套后端配置（`application.yml`，与 3.2.2 一致，这里给出 IP 版取值）：
+
+```yaml
+memorial:
+  qrcode:
+    h5-base-url: http://8.140.249.192        # 公网 IP，HTTP
+  oss:
+    endpoint: https://oss-cn-beijing-internal.aliyuncs.com   # 不变，上传走内网
+    url-prefix: http://8.140.249.192/oss       # 指向 nginx 的 IP 入口，HTTP
+```
+
+- 安全组放行 `80`、`8080`；`18080` 不对公网。
+- 旧数据迁移 SQL 把前缀替换为 `http://8.140.249.192/oss`（模板见 6.3）。
+- 小程序无法用此方案（强制 HTTPS + 备案域名），仅能在开发者工具勾「不校验合法域名」内测。
+- 限制：全程 HTTP，浏览器标"不安全"、微信内打开 H5 受限、不能用微信 JS-SDK。切域名步骤见 7.3。
+
+#### 5.2.2 有域名版（HTTPS） —— 申请到域名后用
 
 `/etc/nginx/conf.d/memorial.conf`：
 
@@ -529,90 +633,18 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ### 7.3 无域名临时方案（IP:端口）
 
-域名/备案未就绪时，H5 + 管理后台可先用服务器公网 IP 跑通（纯 HTTP）。**微信小程序无法用此方案**（强制 HTTPS + 备案域名），仅能在开发者工具勾「不校验合法域名」内测。
+域名/备案未就绪时，H5 + 管理后台可先用服务器公网 IP 跑通（纯 HTTP）。**完整配置（nginx + 后端 yml + 安全组 + 限制）见 5.2.1**，本节只补充从 IP 切到域名时要做的步骤。
 
-以服务器 IP `8.140.249.192` 为例（换成你的实际公网 IP）。
+> 微信小程序无法用 IP 方案（强制 HTTPS + 备案域名），仅能在开发者工具勾「不校验合法域名」内测。
 
-> ⚠️ `h5-base-url` 和 `url-prefix` 必须用**服务器公网 IP**，不能用 `127.0.0.1`。`127.0.0.1` 只能服务器本机访问，前端（浏览器/手机）访问 `127.0.0.1` 会指向用户自己的设备，访问不到服务器。只有 nginx `proxy_pass` 到后端那一步用 `127.0.0.1:18080` 是对的（nginx 和后端同机）。
+**后续切域名**（架构不变，业务代码不动）：
 
-**① `application.yml`**
-
-```yaml
-memorial:
-  qrcode:
-    h5-base-url: http://8.140.249.192        # 公网 IP，HTTP
-  oss:
-    endpoint: https://oss-cn-beijing-internal.aliyuncs.com   # 不变，上传走内网
-    url-prefix: http://8.140.249.192/oss       # 指向 nginx 的 IP 入口，HTTP
-```
-
-**② nginx（HTTP 版，去掉 SSL）**
-
-```nginx
-server {
-    listen 80;
-    server_name _;
-    client_max_body_size 100m;
-
-    location / {
-        root /usr/share/nginx/html/h5;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-    }
-    location /api/ {
-        proxy_pass http://127.0.0.1:18080;     # 不带尾斜杠，保留 /api
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-    location /oss/ {
-        proxy_pass https://memorials.oss-cn-beijing-internal.aliyuncs.com/;
-        proxy_set_header Host memorials.oss-cn-beijing-internal.aliyuncs.com;
-        proxy_ssl_server_name on;
-    }
-}
-
-server {
-    listen 8080;
-    server_name _;
-    client_max_body_size 100m;
-
-    location / {
-        root /usr/share/nginx/html/admin;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-    }
-    location /prod-api/ {
-        proxy_pass http://127.0.0.1:18080/;    # 带尾斜杠，去 /prod-api
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-    location /oss/ {
-        proxy_pass https://memorials.oss-cn-beijing-internal.aliyuncs.com/;
-        proxy_set_header Host memorials.oss-cn-beijing-internal.aliyuncs.com;
-        proxy_ssl_server_name on;
-    }
-}
-```
-
-**③ 安全组**：放行 `80`、`8080`；`18080` 仍不对公网。
-
-**④ 旧数据迁移**（prefix 换成 IP）：
-
-```sql
-UPDATE 表名
-SET 字段 = REPLACE(字段,
-                   'https://memorials.oss-cn-beijing-internal.aliyuncs.com',
-                   'http://8.140.249.192/oss')
-WHERE 字段 LIKE 'https://memorials.oss-cn-beijing-internal.aliyuncs.com%';
-```
-
-**⑤ 前端 env**：H5 不用动（同源）；小程序 `VITE_API_BASE_URL=http://8.140.249.192` 仅开发者工具可调通。
-
-**限制**：全程 HTTP（浏览器标"不安全"、微信内打开 H5 受限、不能用微信 JS-SDK）；小程序无法发布。
-
-**后续切域名**（架构不变）：nginx 加 443 + SSL -> `h5-base-url`/`url-prefix`/env 把 IP 换成 `https://你的域名.com(/oss)` -> 旧数据 SQL 再替换一次前缀。
+1. **nginx**：用 5.2.2 的域名版配置替换 5.2.1 的 IP 版（加 443 + SSL 证书，80 跳转 443）。
+2. **`application.yml`**：`h5-base-url` 改 `https://你的域名.com`，`url-prefix` 改 `https://你的域名.com/oss`。
+3. **`memorial-app/.env.production`**：`VITE_API_BASE_URL=https://你的域名.com`（小程序用）。
+4. **旧数据 SQL**：把库里的 `http://8.140.249.192/oss` 再替换成 `https://你的域名.com/oss`（模板见 6.3）。
+5. **安全组**：放行 `443`（`80` 保留做跳转）。
+6. **微信公众平台**：配置服务器域名白名单（见 8.3）。
 
 ---
 

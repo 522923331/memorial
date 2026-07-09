@@ -14,6 +14,8 @@ ruoyi:
   captchaType: math
 
 # 纪念馆业务配置
+# 注：h5-base-url / oss.endpoint / oss.url-prefix 随环境不同，由 application-dev.yml / application-prod.yml 覆盖；
+#     此处为默认值（=生产）。bucket / AK 通用，所有环境共享。
 memorial:
   qrcode:
     # 二维码扫码后跳转的 H5 前端基础地址
@@ -71,7 +73,9 @@ spring:
     # 国际化资源文件路径
     basename: i18n/messages
   profiles:
-    active: druid
+    # 默认 dev + druid（druid 为数据源）；生产用 prod,druid（dev.sh prod 模式自动切换）
+    # dev/prod 差异配置见 application-dev.yml / application-prod.yml
+    active: dev,druid
   # 文件上传
   servlet:
     multipart:
