@@ -7,7 +7,7 @@ ruoyi:
   # 版权年份
   copyrightYear: 2025
   # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）
-  profile: ./uploadPath
+  profile: '使用阿里云OSS存储:com.ruoyi.memorial.config.OssProperties'
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
@@ -16,9 +16,21 @@ ruoyi:
 # 纪念馆业务配置
 memorial:
   qrcode:
-    # 二维码扫码后跳转的 H5 前端基础地址（生产环境改为正式域名）
+    # 二维码扫码后跳转的 H5 前端基础地址
     # 拼装规则：${h5-base-url}/#/pages/memorial/detail?code=<二维码编码>
-    h5-base-url: http://localhost:5173
+    # 无域名临时方案用服务器公网 IP（不能用 127.0.0.1，否则扫码跳到用户本机）；有域名后改为 https://你的域名.com
+    h5-base-url: http://8.140.249.192
+  oss:
+    # endpoint 用内网域名：后端上传走 ECS 内网，免公网流量费（保持不变）
+    endpoint: https://oss-cn-beijing-internal.aliyuncs.com
+    bucket: memorials
+    # AK/SK 用环境变量注入（OSS_ACCESS_KEY_ID / OSS_ACCESS_KEY_SECRET），勿写死、勿提交
+    access-key-id:
+    access-key-secret:
+    # url-prefix 指向 nginx 反代地址：前端查看/下载走 nginx -> 内网回源 OSS
+    # 无域名临时方案用 http://服务器公网IP/oss（不能用 127.0.0.1，否则前端访问不到）；有域名后改为 https://你的域名.com/oss
+    # 不要用 internal 域名（公网不可达）
+    url-prefix: http://8.140.249.192/oss
 
 # 开发环境配置
 server:
@@ -149,3 +161,4 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
