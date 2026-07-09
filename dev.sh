@@ -350,8 +350,9 @@ start_backend() {
         PROFILE="dev,druid"
     fi
     if [ "$mode" = "prod" ]; then
-        # 生产 JVM 参数（JDK17 兼容，去掉 ry.sh 里已废弃的 -XX:+PrintGC*）
-        local JVM_OPTS="-Duser.timezone=Asia/Shanghai -Xms512m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC -XX:+UseParallelOldGC"
+        # 生产 JVM 参数（去掉已废弃/移除的选项：-XX:+PrintGC*、-XX:+UseParallelOldGC）
+        # UseParallelOldGC 从 JDK15 起废弃(JEP379)，新版 JDK 已移除会报 Unrecognized；UseParallelGC 默认即含 old gen 并行
+        local JVM_OPTS="-Duser.timezone=Asia/Shanghai -Xms512m -Xmx1024m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError -XX:NewRatio=1 -XX:SurvivorRatio=30 -XX:+UseParallelGC"
         echo "[$(ts)]     命令: java $JVM_OPTS -jar $BACKEND_JAR --spring.profiles.active=$PROFILE"
         nohup "$JAVA_HOME_DIR/bin/java" $JVM_OPTS -jar "$BACKEND_JAR" --spring.profiles.active="$PROFILE" > "$BACKEND_LOG" 2>&1 &
     else
@@ -543,11 +544,14 @@ deploy_static() {
     echo "[$(ts)]     ✓ admin -> $NGINX_HTML_ROOT/admin"
     # 静态文件替换无需 reload；nginx 在跑且配置 OK 时顺手 reload 保险
     if command -v nginx >/dev/null 2>&1; then
-        if sudo nginx -t 2>/dev/null; then
+        local nginx_test
+        if nginx_test=$(sudo nginx -t 2>&1); then
             sudo systemctl reload nginx 2>/dev/null || sudo nginx -s reload 2>/dev/null || true
             echo "[$(ts)]     ✓ nginx 已 reload"
         else
-            echo "[$(ts)]     ! nginx -t 失败，请检查 nginx 配置（见 deployment-guide.md 5.2.1）"
+            echo "[$(ts)]     ! nginx -t 失败（reload 已跳过，静态文件已部署不受影响）："
+            printf '%s\n' "$nginx_test" | sed 's/^/             /'
+            echo "[$(ts)]     修正后执行: sudo nginx -t && sudo systemctl reload nginx"
         fi
     fi
 }
