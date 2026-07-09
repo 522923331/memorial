@@ -252,6 +252,29 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
+# 获取占用指定端口的进程 PID（兼容 lsof / ss / fuser / netstat；服务器最小化安装常缺 lsof）
+port_pids() {
+    local port=$1 pids=""
+    if command -v lsof >/dev/null 2>&1; then
+        pids=$(lsof -ti :"$port" 2>/dev/null || true)
+    elif command -v ss >/dev/null 2>&1; then
+        pids=$(ss -lptnH 2>/dev/null | grep -E "[:.]$port\b" | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u)
+    elif command -v fuser >/dev/null 2>&1; then
+        pids=$(fuser "$port/tcp" 2>/dev/null | tr -s '[:space:]' '\n' | grep -E '^[0-9]+$' | sort -u)
+    elif command -v netstat >/dev/null 2>&1; then
+        pids=$(netstat -lptn 2>/dev/null | grep -E "[:.]$port\b" | grep -oE '[0-9]+/' | cut -d/ -f1 | sort -u)
+    fi
+    [ -n "$pids" ] && echo "$pids"
+}
+
+# 杀掉占用指定端口的进程
+kill_port() {
+    local port=$1 pids
+    pids=$(port_pids "$port")
+    [ -z "$pids" ] && return 0
+    echo "$pids" | xargs kill -9 2>/dev/null || true
+}
+
 cleanup() {
     [ "$CLEANING" = "true" ] && return
     CLEANING=true
@@ -261,9 +284,9 @@ cleanup() {
     kill_tree "$FRONTEND_PID"
     kill_tree "$ADMIN_PID"
     kill_tree "$BACKEND_PID"
-    lsof -ti :$BACKEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
-    lsof -ti :$FRONTEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
-    lsof -ti :$ADMIN_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
+    kill_port $BACKEND_PORT
+    kill_port $FRONTEND_PORT
+    kill_port $ADMIN_PORT
     rm -f "$PID_FILE" 2>/dev/null || true
     echo "[$(ts)]     已停止 (总运行时长 $(fmt_duration $SECONDS))"
     echo "[$(ts)]     （生产模式下前端为 nginx 静态文件，不会被动；如需更新重新执行 ./dev.sh）"
@@ -295,8 +318,8 @@ stop_running() {
     echo "[$(ts)]     未找到运行记录，按端口清理残留进程..."
     local killed=false p
     for p in $BACKEND_PORT $FRONTEND_PORT $ADMIN_PORT; do
-        if lsof -ti :$p >/dev/null 2>&1; then
-            lsof -ti :$p | xargs kill -9 2>/dev/null || true
+        if [ -n "$(port_pids $p)" ]; then
+            kill_port $p
             killed=true
         fi
     done
@@ -322,7 +345,7 @@ show_status() {
     echo "端口监听（生产模式仅后端 18080 有进程，前端由 nginx 提供）:"
     local p who
     for p in $BACKEND_PORT $FRONTEND_PORT $ADMIN_PORT; do
-        who=$(lsof -ti :$p 2>/dev/null || true)
+        who=$(port_pids $p | tr '\n' ' ')
         if [ -n "$who" ]; then
             echo "  :$p  ✓ 监听中 (PID $who)"
         else
@@ -336,9 +359,9 @@ start_backend() {
     local mode=$1
     echo ""
     echo "[$(ts)] ==> 启动后端..."
-    if lsof -ti :$BACKEND_PORT >/dev/null 2>&1; then
+    if [ -n "$(port_pids $BACKEND_PORT)" ]; then
         echo "[$(ts)]     端口 $BACKEND_PORT 被占用，先停止旧进程"
-        lsof -ti :$BACKEND_PORT | xargs kill -9 2>/dev/null || true
+        kill_port $BACKEND_PORT
         sleep 1
     fi
 
@@ -443,9 +466,9 @@ start_admin_dev() {
     echo "[$(ts)] ==> 启动管理后台 (ruoyi-ui dev server)..."
     cd "$ADMIN_DIR"
     ensure_npm_deps "$ADMIN_DIR" "ruoyi-ui" "vue-cli-service"
-    if lsof -ti :$ADMIN_PORT >/dev/null 2>&1; then
+    if [ -n "$(port_pids $ADMIN_PORT)" ]; then
         echo "[$(ts)]     端口 $ADMIN_PORT 被占用，先停止旧进程"
-        lsof -ti :$ADMIN_PORT | xargs kill -9 2>/dev/null || true
+        kill_port $ADMIN_PORT
         sleep 1
     fi
     : > "$ADMIN_LOG"
@@ -647,6 +670,14 @@ else
     echo "[$(ts)]     运行模式   = dev（开发：后端 jar + H5 5173 + 管理后台 8008 dev server）"
 fi
 echo "[$(ts)]     系统       = $(uname -s)（可用 --prod / --dev 覆盖）"
+# 端口管理工具：lsof 缺失时自动回退 ss/fuser/netstat；都没有则提示安装
+if ! command -v lsof >/dev/null 2>&1 && ! command -v ss >/dev/null 2>&1 && \
+   ! command -v fuser >/dev/null 2>&1 && ! command -v netstat >/dev/null 2>&1; then
+    echo "[$(ts)]     ! 未找到 lsof/ss/fuser/netstat，无法管理端口占用"
+    echo "             请安装: sudo yum install -y lsof  (Ubuntu: sudo apt install -y lsof)"
+elif ! command -v lsof >/dev/null 2>&1; then
+    echo "[$(ts)]     ! 未装 lsof，端口管理回退 ss/fuser/netstat（建议 sudo yum install -y lsof 更稳）"
+fi
 
 # 后台模式 + 生产部署需要 sudo 时，无 TTY 输密码会卡死，提前拦截
 if [ "$RUN_MODE" = "prod" ] && [ "$MODE" = "detached" ]; then
