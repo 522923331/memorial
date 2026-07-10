@@ -5,6 +5,7 @@ import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.SecurityUtils;
+import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.memorial.domain.*;
 import com.ruoyi.memorial.service.*;
 import com.ruoyi.memorial.utils.QrCodeUtil;
@@ -50,6 +51,9 @@ public class FamilyApiController {
 
     @Autowired
     private OssService ossService;
+
+    @Autowired
+    private TokenService tokenService;
 
     // ========== 辅助方法 ==========
 
@@ -240,7 +244,9 @@ public class FamilyApiController {
             return AjaxResult.error(401, "请先登录");
         }
         String url = ossService.upload(file, "memorial/" + userId + "/cover");
-        return AjaxResult.success(url);
+        // 必须用 success(String, Object) 把 url 放进 data 字段；success(url) 会因方法重载命中 success(String msg)，
+        // 导致 url 被塞进 msg、data 为 null，前端 uploadRes.data 取到 undefined，头像地址传不到后端。
+        return AjaxResult.success("操作成功", url);
     }
 
     // ========== 相册管理 ==========
@@ -558,6 +564,12 @@ public class FamilyApiController {
         user.setCreateTime(null);
         if (userService.updateUserProfile(user) > 0) {
             SysUser updated = userService.selectUserById(userId);
+            // 刷新 SecurityContext/Redis 中的 LoginUser 缓存，否则 /api/userInfo 等接口仍返回修改前的旧值
+            LoginUser loginUser = SecurityUtils.getLoginUser();
+            if (loginUser != null) {
+                loginUser.setUser(updated);
+                tokenService.setLoginUser(loginUser);
+            }
             AjaxResult ajax = AjaxResult.success();
             ajax.put("userId", updated.getUserId());
             ajax.put("userName", updated.getUserName());

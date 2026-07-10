@@ -84,7 +84,10 @@
 
       <view class="form-item vertical">
         <text class="form-label">墓区照片</text>
-        <ImageUploader v-model="form.cemeteryPhoto" />
+        <ImageUploader
+          :model-value="form.cemeteryPhoto"
+          @update:model-value="(v: string) => onImageChange('cemeteryPhoto', v)"
+        />
       </view>
     </view>
 
@@ -94,7 +97,10 @@
 
       <view class="form-item vertical">
         <text class="form-label">封面图片</text>
-        <ImageUploader v-model="form.coverImage" />
+        <ImageUploader
+          :model-value="form.coverImage"
+          @update:model-value="(v: string) => onImageChange('coverImage', v)"
+        />
       </view>
 
       <view class="form-item vertical">
@@ -214,7 +220,7 @@ const form = ref({
   coverImage: '',
   isPublic: '0',
   allowMessage: '0',
-  messageAudit: '1',
+  messageAudit: '0',
 })
 
 const genderLabel = computed(() => {
@@ -278,7 +284,7 @@ onLoad(async (options) => {
         coverImage: d.coverImage || '',
         isPublic: d.isPublic ?? '0',
         allowMessage: d.allowMessage ?? '0',
-        messageAudit: d.messageAudit ?? '1',
+        messageAudit: d.messageAudit ?? '0',
       }
     } finally {
       uni.hideLoading()
@@ -355,6 +361,23 @@ function onAllowMessageChange(e: any) {
 
 function onMessageAuditChange(e: any) {
   form.value.messageAudit = e.detail.value ? '1' : '0'
+}
+
+/**
+ * 图片上传/移除后立即落库（仅编辑模式）。
+ * /api/family/upload 只把文件传到 OSS 并返回 URL，不会写入 mem_deceased；
+ * 若不在此处持久化，刷新页面会重新从 DB 取值，图片就会变回空（与相册/视频上传保持一致：上传即保存）。
+ * 仅提交被改动的单个字段，后端 updateDeceased 按 <if test="xx != null"> 动态更新，不会覆盖其它未提交字段。
+ */
+async function onImageChange(field: 'cemeteryPhoto' | 'coverImage', url: string) {
+  form.value[field] = url
+  if (!isEdit.value || !deceasedId.value) return
+  try {
+    await updateMemorial({ deceasedId: deceasedId.value, [field]: url })
+    uni.showToast({ title: '已保存', icon: 'success' })
+  } catch {
+    // 错误由 request 拦截器统一提示
+  }
 }
 
 function validate(): boolean {

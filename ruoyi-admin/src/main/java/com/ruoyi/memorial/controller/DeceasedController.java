@@ -111,7 +111,8 @@ public class DeceasedController extends BaseController {
         album.setImageUrl(imageUrl);
         album.setSortOrder(0);
         deceasedAlbumService.insertAlbum(album);
-        return AjaxResult.success(imageUrl);
+        // 用 success(String, Object) 把 imageUrl 放进 data；success(String) 重载会把它塞进 msg，前端 res.data 取不到
+        return AjaxResult.success("操作成功", imageUrl);
     }
 
     @PreAuthorize("@ss.hasPermi('memorial:deceased:edit')")

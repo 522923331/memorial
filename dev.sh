@@ -124,17 +124,45 @@ stop_heartbeat() {
     HEARTBEAT_PID=""
 }
 
-# 确保前端依赖已安装（node_modules 被 .gitignore 忽略，新机器需 npm install）
+# 确保前端依赖已安装且完整（node_modules 被 .gitignore 忽略，新机器需 npm install）。
+# 不仅检查 .bin/<bin> 是否存在，还用 require.resolve 探测关键依赖（如 ruoyi-ui 的 lodash），
+# 避免安装中途被网络截断、bin shim 在但传递依赖缺失，导致 webpack 编译时报 ENOENT。
+# 默认源安装失败时自动回退到 npmmirror 国内镜像重试。
+# 用法: ensure_npm_deps <dir> <name> <bin> [probe_module...]
 ensure_npm_deps() {
     local dir=$1 name=$2 bin=$3
+    shift 3
+    local probes=("$@")
+    local need_install=false
+
     if [ ! -x "$dir/node_modules/.bin/$bin" ]; then
         echo "[$(ts)]     $name 缺少依赖（未找到 node_modules/.bin/${bin}）"
+        need_install=true
+    else
+        # bin 在，但可能传递依赖残缺（如 npm install 中途被截断）。任一关键模块无法加载就重装。
+        local probe
+        for probe in "${probes[@]}"; do
+            if ! (cd "$dir" && node -e "require.resolve(process.argv[1])" "$probe" >/dev/null 2>&1); then
+                echo "[$(ts)]     $name 依赖残缺（无法加载 ${probe}），需重新安装"
+                need_install=true
+                break
+            fi
+        done
+    fi
+
+    if [ "$need_install" = true ]; then
         echo "[$(ts)]     ==> 执行 npm install（首次较慢，可能数分钟）..."
-        (cd "$dir" && npm install --no-audit --no-fund) || {
-            echo "[$(ts)]     ✗ $name npm install 失败"
-            exit 1
-        }
-        echo "[$(ts)]     ✓ $name 依赖安装完成"
+        if (cd "$dir" && npm install --no-audit --no-fund); then
+            echo "[$(ts)]     ✓ $name 依赖安装完成"
+        else
+            echo "[$(ts)]     ! 默认源安装失败，切换 npmmirror 国内镜像重试..."
+            if (cd "$dir" && npm install --registry=https://registry.npmmirror.com --no-audit --no-fund); then
+                echo "[$(ts)]     ✓ $name 依赖安装完成（npmmirror 镜像）"
+            else
+                echo "[$(ts)]     ✗ $name npm install 失败"
+                exit 1
+            fi
+        fi
     fi
 }
 
@@ -422,7 +450,7 @@ start_frontend_dev() {
     echo ""
     echo "[$(ts)] ==> 启动前端 (memorial-app H5 dev server)..."
     cd "$FRONTEND_DIR"
-    ensure_npm_deps "$FRONTEND_DIR" "memorial-app" "uni"
+    ensure_npm_deps "$FRONTEND_DIR" "memorial-app" "uni" "vue" "vite"
     : > "$FRONTEND_LOG"
     # 显式 --host 0.0.0.0 让 H5 可被外网访问（uni 默认只绑 localhost）
     nohup npx uni --host $FRONTEND_HOST --port $FRONTEND_PORT > "$FRONTEND_LOG" 2>&1 &
@@ -465,7 +493,7 @@ start_admin_dev() {
     echo ""
     echo "[$(ts)] ==> 启动管理后台 (ruoyi-ui dev server)..."
     cd "$ADMIN_DIR"
-    ensure_npm_deps "$ADMIN_DIR" "ruoyi-ui" "vue-cli-service"
+    ensure_npm_deps "$ADMIN_DIR" "ruoyi-ui" "vue-cli-service" "lodash" "html-webpack-plugin"
     if [ -n "$(port_pids $ADMIN_PORT)" ]; then
         echo "[$(ts)]     端口 $ADMIN_PORT 被占用，先停止旧进程"
         kill_port $ADMIN_PORT
@@ -513,7 +541,7 @@ build_h5() {
     echo ""
     echo "[$(ts)] ==> 构建 H5 生产产物 (npm run build:h5)..."
     cd "$FRONTEND_DIR"
-    ensure_npm_deps "$FRONTEND_DIR" "memorial-app" "uni"
+    ensure_npm_deps "$FRONTEND_DIR" "memorial-app" "uni" "vue" "vite"
     local t=$SECONDS
     start_heartbeat "$H5_BUILD_LOG" "H5 构建" 20
     # tee 实时显示到终端 + 写日志；心跳兜底防止 vite 输出缓冲时看起来卡住
@@ -533,7 +561,7 @@ build_admin() {
     echo ""
     echo "[$(ts)] ==> 构建管理后台生产产物 (npm run build:prod)..."
     cd "$ADMIN_DIR"
-    ensure_npm_deps "$ADMIN_DIR" "ruoyi-ui" "vue-cli-service"
+    ensure_npm_deps "$ADMIN_DIR" "ruoyi-ui" "vue-cli-service" "lodash" "html-webpack-plugin"
     local t=$SECONDS
     start_heartbeat "$ADMIN_BUILD_LOG" "管理后台构建" 20
     npm run build:prod 2>&1 | tee "$ADMIN_BUILD_LOG"
