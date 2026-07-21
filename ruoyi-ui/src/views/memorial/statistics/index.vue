@@ -1,9 +1,9 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="逝者ID" prop="deceasedId">
+      <el-form-item label="逝者ID" prop="subjectId">
         <el-input
-          v-model="queryParams.deceasedId"
+          v-model="queryParams.subjectId"
           placeholder="请输入逝者ID"
           clearable
           @keyup.enter.native="handleQuery"
@@ -103,7 +103,8 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        deceasedId: undefined
+        subjectType: 0,
+        subjectId: undefined
       }
     }
   },
@@ -132,7 +133,7 @@ export default {
       this.multiple = !selection.length
     },
     handleDetail(row) {
-      getStatisticsByDeceased(row.deceasedId).then(response => {
+      getStatisticsByDeceased(row.subjectId).then(response => {
         this.detailData = response.data
         this.detailOpen = true
       })

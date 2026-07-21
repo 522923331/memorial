@@ -21,11 +21,14 @@ export const useMemorialStore = defineStore('memorial', () => {
   const messageCount = ref(0)
   const flowerCount = ref(0)
   const loading = ref(false)
+  const error = ref('')
   const recentVisits = ref<RecentVisit[]>(
     getStorage<RecentVisit[]>(STORAGE_KEYS.RECENT_VISITS, []),
   )
 
   async function loadMemorialPage(code: string) {
+    // 先清空上次数据，避免请求失败时残留旧逝者信息
+    clearMemorial()
     loading.value = true
     try {
       const res = await getMemorialByCode(code)
@@ -39,6 +42,8 @@ export const useMemorialStore = defineStore('memorial', () => {
       messageCount.value = data.messageCount || 0
       flowerCount.value = data.flowerCount || 0
       addRecentVisit(data.deceased)
+    } catch (e: any) {
+      error.value = e?.message || '加载失败'
     } finally {
       loading.value = false
     }
@@ -103,6 +108,7 @@ export const useMemorialStore = defineStore('memorial', () => {
     totalVisit.value = 0
     messageCount.value = 0
     flowerCount.value = 0
+    error.value = ''
   }
 
   return {
@@ -115,6 +121,7 @@ export const useMemorialStore = defineStore('memorial', () => {
     messageCount,
     flowerCount,
     loading,
+    error,
     recentVisits,
     loadMemorialPage,
     loadMessages,

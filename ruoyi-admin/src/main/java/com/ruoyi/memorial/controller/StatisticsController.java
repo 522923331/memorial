@@ -3,8 +3,8 @@ package com.ruoyi.memorial.controller;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
-import com.ruoyi.memorial.domain.Statistics;
-import com.ruoyi.memorial.service.IStatisticsService;
+import com.ruoyi.memorial.shared.statistics.domain.Statistics;
+import com.ruoyi.memorial.shared.statistics.service.IStatisticsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,9 +29,9 @@ public class StatisticsController extends BaseController {
     @GetMapping("/deceased/{deceasedId}")
     public AjaxResult getByDeceased(@PathVariable Long deceasedId) {
         AjaxResult ajax = AjaxResult.success();
-        ajax.put("totalVisit", statisticsService.getTotalVisitByDeceasedId(deceasedId));
-        ajax.put("totalMessage", statisticsService.getTotalMessageByDeceasedId(deceasedId));
-        ajax.put("totalFlower", statisticsService.getTotalFlowerByDeceasedId(deceasedId));
+        ajax.put("totalVisit", statisticsService.getTotalVisit(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId));
+        ajax.put("totalMessage", statisticsService.getTotalMessage(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId));
+        ajax.put("totalFlower", statisticsService.getTotalFlower(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId));
         return ajax;
     }
 

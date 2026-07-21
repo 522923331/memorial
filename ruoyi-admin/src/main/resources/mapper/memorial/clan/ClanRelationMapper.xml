@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.clan.mapper.ClanRelationMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.clan.domain.ClanRelation">
+        <id property="relationId" column="relation_id"/>
+        <result property="clanId" column="clan_id"/>
+        <result property="fromMemberId" column="from_member_id"/>
+        <result property="toMemberId" column="to_member_id"/>
+        <result property="relationType" column="relation_type"/>
+        <result property="relationOrder" column="relation_order"/>
+        <result property="extra" column="extra"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <sql id="relationColumns">
+        r.relation_id, r.clan_id, r.from_member_id, r.to_member_id, r.relation_type, r.relation_order,
+        r.extra, r.create_by, r.create_time
+    </sql>
+
+    <select id="selectRelationById" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="relationColumns"/>
+        from mem_clan_relation r
+        where r.relation_id = #{relationId}
+    </select>
+
+    <select id="selectRelationsByClanId" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="relationColumns"/>
+        from mem_clan_relation r
+        where r.clan_id = #{clanId}
+        order by r.relation_type asc, r.relation_order asc
+    </select>
+
+    <select id="selectRelationsByFromMember" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="relationColumns"/>
+        from mem_clan_relation r
+        where r.from_member_id = #{fromMemberId}
+        order by r.relation_type asc, r.relation_order asc
+    </select>
+
+    <select id="selectRelationsByToMember" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="relationColumns"/>
+        from mem_clan_relation r
+        where r.to_member_id = #{toMemberId}
+        order by r.relation_type asc, r.relation_order asc
+    </select>
+
+    <insert id="insertRelation" parameterType="ClanRelation" useGeneratedKeys="true" keyProperty="relationId">
+        insert into mem_clan_relation
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="clanId != null">clan_id,</if>
+            <if test="fromMemberId != null">from_member_id,</if>
+            <if test="toMemberId != null">to_member_id,</if>
+            <if test="relationType != null">relation_type,</if>
+            <if test="relationOrder != null">relation_order,</if>
+            <if test="extra != null">extra,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="clanId != null">#{clanId},</if>
+            <if test="fromMemberId != null">#{fromMemberId},</if>
+            <if test="toMemberId != null">#{toMemberId},</if>
+            <if test="relationType != null">#{relationType},</if>
+            <if test="relationOrder != null">#{relationOrder},</if>
+            <if test="extra != null">#{extra},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <delete id="deleteRelationById" parameterType="Long">
+        delete from mem_clan_relation where relation_id = #{relationId}
+    </delete>
+
+    <delete id="deleteRelationsByClanId" parameterType="Long">
+        delete from mem_clan_relation where clan_id = #{clanId}
+    </delete>
+
+    <delete id="deleteRelationsByMember" parameterType="Long">
+        delete from mem_clan_relation where from_member_id = #{memberId} or to_member_id = #{memberId}
+    </delete>
+</mapper>

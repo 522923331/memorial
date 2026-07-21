@@ -5,6 +5,7 @@ import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.memorial.domain.*;
 import com.ruoyi.memorial.service.*;
+import com.ruoyi.memorial.shared.statistics.service.IStatisticsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -54,12 +55,12 @@ public class PublicApiController {
         Long deceasedId = deceased.getDeceasedId();
 
         // 记录访问统计
-        statisticsService.incrementVisitCount(deceasedId);
+        statisticsService.incrementVisitCount(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId);
 
         // 获取统计数据
-        Integer totalVisit = statisticsService.getTotalVisitByDeceasedId(deceasedId);
-        Integer messageCount = statisticsService.getTotalMessageByDeceasedId(deceasedId);
-        Integer flowerCount = statisticsService.getTotalFlowerByDeceasedId(deceasedId);
+        Integer totalVisit = statisticsService.getTotalVisit(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId);
+        Integer messageCount = statisticsService.getTotalMessage(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId);
+        Integer flowerCount = statisticsService.getTotalFlower(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId);
 
         // 获取相册
         List<DeceasedAlbum> albums = deceasedAlbumService.selectAlbumByDeceasedId(deceasedId);
@@ -110,7 +111,7 @@ public class PublicApiController {
             if (deceased != null && "0".equals(deceased.getMessageAudit())) {
                 messageService.auditMessage(message.getMessageId(), "1");
             }
-            statisticsService.incrementMessageCount(message.getDeceasedId());
+            statisticsService.incrementMessageCount(IStatisticsService.SUBJECT_TYPE_DECEASED, message.getDeceasedId());
         }
         return toAjax(result);
     }
@@ -133,7 +134,7 @@ public class PublicApiController {
         flower.setCreateTime(DateUtils.getNowDate());
         int result = flowerService.insertFlower(flower);
         if (result > 0) {
-            statisticsService.incrementFlowerCount(flower.getDeceasedId());
+            statisticsService.incrementFlowerCount(IStatisticsService.SUBJECT_TYPE_DECEASED, flower.getDeceasedId());
         }
         return toAjax(result);
     }

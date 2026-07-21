@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.clan.mapper.ClanMemberMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.clan.domain.ClanMember">
+        <id property="memberId" column="member_id"/>
+        <result property="clanId" column="clan_id"/>
+        <result property="name" column="name"/>
+        <result property="gender" column="gender"/>
+        <result property="birthDate" column="birth_date"/>
+        <result property="deathDate" column="death_date"/>
+        <result property="isAlive" column="is_alive"/>
+        <result property="birthPlace" column="birth_place"/>
+        <result property="title" column="title"/>
+        <result property="generation" column="generation"/>
+        <result property="avatar" column="avatar"/>
+        <result property="bio" column="bio"/>
+        <result property="deceasedId" column="deceased_id"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="memberColumns">
+        m.member_id, m.clan_id, m.name, m.gender, m.birth_date, m.death_date, m.is_alive, m.birth_place,
+        m.title, m.generation, m.avatar, m.bio, m.deceased_id, m.sort_order, m.del_flag,
+        m.create_by, m.create_time, m.update_by, m.update_time
+    </sql>
+
+    <select id="selectMemberList" parameterType="ClanMember" resultMap="BaseResultMap">
+        select <include refid="memberColumns"/>
+        from mem_clan_member m
+        where m.del_flag = '0'
+        <if test="clanId != null">
+            and m.clan_id = #{clanId}
+        </if>
+        <if test="name != null and name != ''">
+            and m.name like concat('%', #{name}, '%')
+        </if>
+        <if test="gender != null and gender != ''">
+            and m.gender = #{gender}
+        </if>
+        <if test="isAlive != null and isAlive != ''">
+            and m.is_alive = #{isAlive}
+        </if>
+        <if test="deceasedId != null">
+            and m.deceased_id = #{deceasedId}
+        </if>
+        order by m.generation asc, m.sort_order asc
+    </select>
+
+    <select id="selectMemberById" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="memberColumns"/>
+        from mem_clan_member m
+        where m.member_id = #{memberId} and m.del_flag = '0'
+    </select>
+
+    <select id="selectByDeceasedId" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="memberColumns"/>
+        from mem_clan_member m
+        where m.deceased_id = #{deceasedId} and m.del_flag = '0'
+        limit 1
+    </select>
+
+    <select id="selectMembersByClanId" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="memberColumns"/>
+        from mem_clan_member m
+        where m.clan_id = #{clanId} and m.del_flag = '0'
+        order by m.generation asc, m.sort_order asc
+    </select>
+
+    <select id="countByClanId" parameterType="Long" resultType="int">
+        select count(*) from mem_clan_member where clan_id = #{clanId} and del_flag = '0'
+    </select>
+
+    <insert id="insertMember" parameterType="ClanMember" useGeneratedKeys="true" keyProperty="memberId">
+        insert into mem_clan_member
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="clanId != null">clan_id,</if>
+            <if test="name != null">name,</if>
+            <if test="gender != null">gender,</if>
+            <if test="birthDate != null">birth_date,</if>
+            <if test="deathDate != null">death_date,</if>
+            <if test="isAlive != null">is_alive,</if>
+            <if test="birthPlace != null">birth_place,</if>
+            <if test="title != null">title,</if>
+            <if test="generation != null">generation,</if>
+            <if test="avatar != null">avatar,</if>
+            <if test="bio != null">bio,</if>
+            <if test="deceasedId != null">deceased_id,</if>
+            <if test="sortOrder != null">sort_order,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="clanId != null">#{clanId},</if>
+            <if test="name != null">#{name},</if>
+            <if test="gender != null">#{gender},</if>
+            <if test="birthDate != null">#{birthDate},</if>
+            <if test="deathDate != null">#{deathDate},</if>
+            <if test="isAlive != null">#{isAlive},</if>
+            <if test="birthPlace != null">#{birthPlace},</if>
+            <if test="title != null">#{title},</if>
+            <if test="generation != null">#{generation},</if>
+            <if test="avatar != null">#{avatar},</if>
+            <if test="bio != null">#{bio},</if>
+            <if test="deceasedId != null">#{deceasedId},</if>
+            <if test="sortOrder != null">#{sortOrder},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateMember" parameterType="ClanMember">
+        update mem_clan_member
+        <set>
+            <if test="clanId != null">clan_id = #{clanId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="birthDate != null">birth_date = #{birthDate},</if>
+            <if test="deathDate != null">death_date = #{deathDate},</if>
+            <if test="isAlive != null">is_alive = #{isAlive},</if>
+            <if test="birthPlace != null">birth_place = #{birthPlace},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="generation != null">generation = #{generation},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="bio != null">bio = #{bio},</if>
+            <if test="deceasedId != null">deceased_id = #{deceasedId},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        where member_id = #{memberId} and del_flag = '0'
+    </update>
+
+    <update id="updateGeneration">
+        update mem_clan_member set generation = #{generation}
+        where member_id = #{memberId} and del_flag = '0'
+    </update>
+
+    <delete id="deleteMemberByIds">
+        update mem_clan_member set del_flag = '2' where member_id in
+        <foreach item="memberId" collection="array" open="(" separator="," close=")">
+            #{memberId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteMembersByClanId" parameterType="Long">
+        update mem_clan_member set del_flag = '2' where clan_id = #{clanId} and del_flag = '0'
+    </delete>
+</mapper>

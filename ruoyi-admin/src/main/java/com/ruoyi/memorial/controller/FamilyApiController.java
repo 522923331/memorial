@@ -8,6 +8,8 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.memorial.domain.*;
 import com.ruoyi.memorial.service.*;
+import com.ruoyi.memorial.shared.statistics.domain.Statistics;
+import com.ruoyi.memorial.shared.statistics.service.IStatisticsService;
 import com.ruoyi.memorial.utils.QrCodeUtil;
 import com.ruoyi.system.service.ISysUserService;
 import org.slf4j.Logger;
@@ -507,12 +509,13 @@ public class FamilyApiController {
         }
 
         AjaxResult ajax = AjaxResult.success();
-        ajax.put("totalVisit", statisticsService.getTotalVisitByDeceasedId(deceasedId));
-        ajax.put("totalMessage", statisticsService.getTotalMessageByDeceasedId(deceasedId));
-        ajax.put("totalFlower", statisticsService.getTotalFlowerByDeceasedId(deceasedId));
+        ajax.put("totalVisit", statisticsService.getTotalVisit(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId));
+        ajax.put("totalMessage", statisticsService.getTotalMessage(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId));
+        ajax.put("totalFlower", statisticsService.getTotalFlower(IStatisticsService.SUBJECT_TYPE_DECEASED, deceasedId));
 
         Statistics query = new Statistics();
-        query.setDeceasedId(deceasedId);
+        query.setSubjectType(IStatisticsService.SUBJECT_TYPE_DECEASED);
+        query.setSubjectId(deceasedId);
         List<Statistics> dailyStats = statisticsService.selectStatisticsList(query);
         ajax.put("dailyStats", dailyStats);
         return ajax;
@@ -534,9 +537,9 @@ public class FamilyApiController {
             item.put("deceasedId", d.getDeceasedId());
             item.put("name", d.getName());
             item.put("coverImage", d.getCoverImage());
-            item.put("totalVisit", statisticsService.getTotalVisitByDeceasedId(d.getDeceasedId()));
-            item.put("totalMessage", statisticsService.getTotalMessageByDeceasedId(d.getDeceasedId()));
-            item.put("totalFlower", statisticsService.getTotalFlowerByDeceasedId(d.getDeceasedId()));
+            item.put("totalVisit", statisticsService.getTotalVisit(IStatisticsService.SUBJECT_TYPE_DECEASED, d.getDeceasedId()));
+            item.put("totalMessage", statisticsService.getTotalMessage(IStatisticsService.SUBJECT_TYPE_DECEASED, d.getDeceasedId()));
+            item.put("totalFlower", statisticsService.getTotalFlower(IStatisticsService.SUBJECT_TYPE_DECEASED, d.getDeceasedId()));
             summary.add(item);
         }
         return AjaxResult.success(summary);

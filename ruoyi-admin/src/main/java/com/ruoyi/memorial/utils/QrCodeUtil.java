@@ -56,7 +56,16 @@ public class QrCodeUtil {
      * 存储路径：memorial/<userId>/qrcode/<qrcodeCode>.png
      */
     public QrCodeResult generateForCode(String qrcodeCode, Long userId) {
-        String content = buildContent(qrcodeCode);
+        return generateForCode(qrcodeCode, userId, "pages/memorial/detail");
+    }
+
+    /**
+     * 生成二维码图片并上传 OSS，返回可访问的 URL 和扫码内容。
+     * 存储路径：memorial/<userId>/qrcode/<qrcodeCode>.png
+     * @param pagePath 扫码跳转的 H5 页面路径，如 pages/memorial/detail 或 pages/clan/detail
+     */
+    public QrCodeResult generateForCode(String qrcodeCode, Long userId, String pagePath) {
+        String content = buildContent(qrcodeCode, pagePath);
         String url;
         try {
             byte[] qrBytes = generateQrCode(content);
@@ -70,12 +79,12 @@ public class QrCodeUtil {
         return new QrCodeResult(url, content);
     }
 
-    private String buildContent(String qrcodeCode) {
+    private String buildContent(String qrcodeCode, String pagePath) {
         if (h5BaseUrl == null || h5BaseUrl.isBlank()) {
             return qrcodeCode;
         }
         String base = h5BaseUrl.replaceAll("/+$", "");
-        return base + "/#/pages/memorial/detail?code=" + qrcodeCode;
+        return base + "/#/" + pagePath + "?code=" + qrcodeCode;
     }
 
     public record QrCodeResult(String url, String content) {

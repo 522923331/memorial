@@ -21,8 +21,15 @@
       </view>
     </view>
 
+    <!-- 错误态：加载失败/未找到，避免显示上次残留的逝者 -->
+    <view v-else-if="error" class="error-state">
+      <uni-icons type="info" size="64" color="#bbb" />
+      <text class="error-text">{{ error }}</text>
+      <view class="error-btn" @tap="goBack">返回上一页</view>
+    </view>
+
     <!-- 实际内容 -->
-    <template v-else>
+    <template v-else-if="deceased">
       <!-- 顶部逝者信息 -->
       <MemorialHeader
         :deceased="deceased"
@@ -95,6 +102,10 @@
           <uni-icons type="redo" size="22" color="#2c3e50" />
           <text class="action-text">分享</text>
         </view>
+        <view v-if="linkedClanId" class="action-btn" @tap="goClan">
+          <uni-icons type="staff" size="22" color="#2c3e50" />
+          <text class="action-text">族谱</text>
+        </view>
       </view>
 
       <!-- 相册 -->
@@ -165,9 +176,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { onLoad, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import { useMemorialStore } from '@/stores/memorial'
+import { getClanByDeceased } from '@/api/clan'
 import MemorialHeader from '@/components/MemorialHeader.vue'
 import AlbumGrid from '@/components/AlbumGrid.vue'
 import VideoCard from '@/components/VideoCard.vue'
@@ -178,6 +190,7 @@ const memorialStore = useMemorialStore()
 
 const bioCollapsed = ref(true)
 const code = ref('')
+const linkedClanId = ref<number>()
 
 const deceased = computed(() => memorialStore.currentDeceased)
 const albums = computed(() => memorialStore.albums)
@@ -188,6 +201,7 @@ const totalVisit = computed(() => memorialStore.totalVisit)
 const messageCount = computed(() => memorialStore.messageCount)
 const flowerCount = computed(() => memorialStore.flowerCount)
 const loading = computed(() => memorialStore.loading)
+const error = computed(() => memorialStore.error)
 
 const hasCemeteryInfo = computed(() => {
   const d = deceased.value
@@ -219,11 +233,34 @@ function previewCemeteryPhoto() {
 }
 
 onLoad((options) => {
+  // 清空上次残留，避免新页面带上旧逝者的族谱入口
+  linkedClanId.value = undefined
   if (options?.code) {
     code.value = options.code
     memorialStore.loadMemorialPage(options.code)
   }
 })
+
+watch(deceased, (d) => {
+  if (d?.deceasedId && !linkedClanId.value) {
+    loadLinkedClan(d.deceasedId)
+  }
+})
+
+async function loadLinkedClan(deceasedId: number) {
+  try {
+    const res: any = await getClanByDeceased(deceasedId)
+    if (res.clanId) linkedClanId.value = res.clanId
+  } catch {
+    /* ignore */
+  }
+}
+
+function goClan() {
+  if (linkedClanId.value) {
+    uni.navigateTo({ url: `/pages/clan/detail?clanId=${linkedClanId.value}` })
+  }
+}
 
 function goBack() {
   uni.navigateBack({ delta: 1 })
@@ -418,6 +455,29 @@ onShareTimeline(() => ({
   height: 40rpx;
   padding-bottom: constant(safe-area-inset-bottom);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 60rpx;
+  gap: 24rpx;
+}
+
+.error-text {
+  font-size: 30rpx;
+  color: #999;
+}
+
+.error-btn {
+  margin-top: 16rpx;
+  padding: 16rpx 48rpx;
+  background: #2c3e50;
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 28rpx;
 }
 
 /* 骨架屏 */

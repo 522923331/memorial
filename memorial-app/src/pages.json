@@ -97,6 +97,42 @@
       "style": {
         "navigationBarTitleText": "访问统计"
       }
+    },
+    {
+      "path": "pages/clan/list",
+      "style": {
+        "navigationBarTitleText": "我的族谱"
+      }
+    },
+    {
+      "path": "pages/clan/edit",
+      "style": {
+        "navigationBarTitleText": "族谱"
+      }
+    },
+    {
+      "path": "pages/clan/detail",
+      "style": {
+        "navigationBarTitleText": "族谱"
+      }
+    },
+    {
+      "path": "pages/clan/members",
+      "style": {
+        "navigationBarTitleText": "成员管理"
+      }
+    },
+    {
+      "path": "pages/clan/member-edit",
+      "style": {
+        "navigationBarTitleText": "成员"
+      }
+    },
+    {
+      "path": "pages/clan/qrcode",
+      "style": {
+        "navigationBarTitleText": "族谱二维码"
+      }
     }
   ],
   "globalStyle": {

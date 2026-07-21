@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.memorial.clan.mapper.ClanMapper">
+
+    <resultMap id="BaseResultMap" type="com.ruoyi.memorial.clan.domain.Clan">
+        <id property="clanId" column="clan_id"/>
+        <result property="clanName" column="clan_name"/>
+        <result property="surname" column="surname"/>
+        <result property="familyUserId" column="family_user_id"/>
+        <result property="orgId" column="org_id"/>
+        <result property="rootMemberId" column="root_member_id"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="description" column="description"/>
+        <result property="isPublic" column="is_public"/>
+        <result property="showAliveAvatar" column="show_alive_avatar"/>
+        <result property="qrcodeCode" column="qrcode_code"/>
+        <result property="qrcodeUrl" column="qrcode_url"/>
+        <result property="memberCount" column="member_count"/>
+        <result property="generationCount" column="generation_count"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="clanColumns">
+        c.clan_id, c.clan_name, c.surname, c.family_user_id, c.org_id, c.root_member_id, c.cover_image,
+        c.description, c.is_public, c.show_alive_avatar, c.qrcode_code, c.qrcode_url, c.member_count,
+        c.generation_count, c.status, c.del_flag, c.create_by, c.create_time, c.update_by, c.update_time
+    </sql>
+
+    <select id="selectClanList" parameterType="Clan" resultMap="BaseResultMap">
+        select <include refid="clanColumns"/>
+        from mem_clan c
+        where c.del_flag = '0'
+        <if test="clanName != null and clanName != ''">
+            and c.clan_name like concat('%', #{clanName}, '%')
+        </if>
+        <if test="surname != null and surname != ''">
+            and c.surname like concat('%', #{surname}, '%')
+        </if>
+        <if test="familyUserId != null">
+            and c.family_user_id = #{familyUserId}
+        </if>
+        <if test="isPublic != null and isPublic != ''">
+            and c.is_public = #{isPublic}
+        </if>
+        <if test="status != null and status != ''">
+            and c.status = #{status}
+        </if>
+        order by c.create_time desc
+    </select>
+
+    <select id="selectClanById" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="clanColumns"/>
+        from mem_clan c
+        where c.clan_id = #{clanId} and c.del_flag = '0'
+    </select>
+
+    <select id="selectClanByQrcode" parameterType="String" resultMap="BaseResultMap">
+        select <include refid="clanColumns"/>
+        from mem_clan c
+        where c.qrcode_code = #{qrcodeCode} and c.del_flag = '0'
+    </select>
+
+    <select id="selectClanByFamilyId" parameterType="Long" resultMap="BaseResultMap">
+        select <include refid="clanColumns"/>
+        from mem_clan c
+        where c.family_user_id = #{familyUserId} and c.del_flag = '0'
+        order by c.create_time desc
+    </select>
+
+    <select id="searchPublicClan" parameterType="String" resultMap="BaseResultMap">
+        select <include refid="clanColumns"/>
+        from mem_clan c
+        where c.del_flag = '0' and c.is_public = '0' and c.status = '0'
+        and (c.clan_name like concat('%', #{keyword}, '%') or c.surname like concat('%', #{keyword}, '%'))
+        order by c.create_time desc
+        limit 20
+    </select>
+
+    <insert id="insertClan" parameterType="Clan" useGeneratedKeys="true" keyProperty="clanId">
+        insert into mem_clan
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="clanName != null">clan_name,</if>
+            <if test="surname != null">surname,</if>
+            <if test="familyUserId != null">family_user_id,</if>
+            <if test="orgId != null">org_id,</if>
+            <if test="rootMemberId != null">root_member_id,</if>
+            <if test="coverImage != null">cover_image,</if>
+            <if test="description != null">description,</if>
+            <if test="isPublic != null">is_public,</if>
+            <if test="showAliveAvatar != null">show_alive_avatar,</if>
+            <if test="qrcodeCode != null">qrcode_code,</if>
+            <if test="qrcodeUrl != null">qrcode_url,</if>
+            <if test="memberCount != null">member_count,</if>
+            <if test="generationCount != null">generation_count,</if>
+            <if test="status != null">status,</if>
+            <if test="delFlag != null">del_flag,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="clanName != null">#{clanName},</if>
+            <if test="surname != null">#{surname},</if>
+            <if test="familyUserId != null">#{familyUserId},</if>
+            <if test="orgId != null">#{orgId},</if>
+            <if test="rootMemberId != null">#{rootMemberId},</if>
+            <if test="coverImage != null">#{coverImage},</if>
+            <if test="description != null">#{description},</if>
+            <if test="isPublic != null">#{isPublic},</if>
+            <if test="showAliveAvatar != null">#{showAliveAvatar},</if>
+            <if test="qrcodeCode != null">#{qrcodeCode},</if>
+            <if test="qrcodeUrl != null">#{qrcodeUrl},</if>
+            <if test="memberCount != null">#{memberCount},</if>
+            <if test="generationCount != null">#{generationCount},</if>
+            <if test="status != null">#{status},</if>
+            <if test="delFlag != null">#{delFlag},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+        </trim>
+    </insert>
+
+    <update id="updateClan" parameterType="Clan">
+        update mem_clan
+        <set>
+            <if test="clanName != null">clan_name = #{clanName},</if>
+            <if test="surname != null">surname = #{surname},</if>
+            <if test="familyUserId != null">family_user_id = #{familyUserId},</if>
+            <if test="orgId != null">org_id = #{orgId},</if>
+            <if test="rootMemberId != null">root_member_id = #{rootMemberId},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="isPublic != null">is_public = #{isPublic},</if>
+            <if test="showAliveAvatar != null">show_alive_avatar = #{showAliveAvatar},</if>
+            <if test="qrcodeCode != null">qrcode_code = #{qrcodeCode},</if>
+            <if test="qrcodeUrl != null">qrcode_url = #{qrcodeUrl},</if>
+            <if test="memberCount != null">member_count = #{memberCount},</if>
+            <if test="generationCount != null">generation_count = #{generationCount},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        where clan_id = #{clanId} and del_flag = '0'
+    </update>
+
+    <delete id="deleteClanByIds">
+        update mem_clan set del_flag = '2' where clan_id in
+        <foreach item="clanId" collection="array" open="(" separator="," close=")">
+            #{clanId}
+        </foreach>
+    </delete>
+</mapper>

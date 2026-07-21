@@ -181,3 +181,34 @@ insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_ty
 values (122, 2, '高级套餐', '1', 'memorial_package_type', '', 'primary', 'N', '0', 'admin', sysdate(), '', null, '高级套餐');
 insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
 values (123, 3, 'VIP套餐',  '2', 'memorial_package_type', '', 'warning', 'N', '0', 'admin', sysdate(), '', null, 'VIP套餐');
+
+-- 族谱管理菜单（二级菜单 + 按钮）
+insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values ('2008', '族谱管理', '2000', '8', 'clan', 'memorial/clan/index', '', '', 1, 0, 'C', '0', '0', 'memorial:clan:list', 'tree-table', 'admin', sysdate(), '', null, '族谱管理菜单');
+insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values ('2080', '族谱查询', '2008', '1', '', '', '', '', 1, 0, 'F', '0', '0', 'memorial:clan:query',  '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values ('2081', '族谱新增', '2008', '2', '', '', '', '', 1, 0, 'F', '0', '0', 'memorial:clan:add',    '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values ('2082', '族谱修改', '2008', '3', '', '', '', '', 1, 0, 'F', '0', '0', 'memorial:clan:edit',   '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu (menu_id, menu_name, parent_id, order_num, path, component, query, route_name, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values ('2083', '族谱删除', '2008', '4', '', '', '', '', 1, 0, 'F', '0', '0', 'memorial:clan:remove', '#', 'admin', sysdate(), '', null, '');
+
+-- 族谱关系类型 memorial_clan_relation_type
+insert into sys_dict_type (dict_id, dict_name, dict_type, status, create_by, create_time, update_by, update_time, remark)
+values (107, '族谱关系类型', 'memorial_clan_relation_type', '0', 'admin', sysdate(), '', null, '族谱成员关系类型');
+
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (124, 1, '生父', '1', 'memorial_clan_relation_type', '', 'primary', 'Y', '0', 'admin', sysdate(), '', null, '生父');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (125, 2, '生母', '2', 'memorial_clan_relation_type', '', 'success', 'N', '0', 'admin', sysdate(), '', null, '生母');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (126, 3, '配偶', '3', 'memorial_clan_relation_type', '', 'info',    'N', '0', 'admin', sysdate(), '', null, '配偶（双向）');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (127, 4, '养父', '4', 'memorial_clan_relation_type', '', 'warning', 'N', '0', 'admin', sysdate(), '', null, '养父');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (128, 5, '养母', '5', 'memorial_clan_relation_type', '', 'warning', 'N', '0', 'admin', sysdate(), '', null, '养母');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (129, 6, '继父', '6', 'memorial_clan_relation_type', '', 'danger',  'N', '0', 'admin', sysdate(), '', null, '继父');
+insert into sys_dict_data (dict_code, dict_sort, dict_label, dict_value, dict_type, css_class, list_class, is_default, status, create_by, create_time, update_by, update_time, remark)
+values (130, 7, '继母', '7', 'memorial_clan_relation_type', '', 'danger',  'N', '0', 'admin', sysdate(), '', null, '继母');
