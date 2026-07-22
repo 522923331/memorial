@@ -2,7 +2,7 @@
   <view class="page">
     <!-- 空状态 -->
     <view v-if="!loading && clans.length === 0" class="empty-state">
-      <image class="empty-icon" src="/static/images/empty.png" mode="aspectFit" />
+      <image class="empty-icon" src="/static/images/default-clan.png" mode="aspectFit" />
       <text class="empty-text">您尚未创建族谱</text>
       <button class="create-btn" @tap="goCreate">创建族谱</button>
     </view>
@@ -13,7 +13,7 @@
         <view class="card-main" @tap="goDetail(item)">
           <image
             class="card-cover"
-            :src="item.coverImage || '/static/images/default-avatar.png'"
+            :src="item.coverImage || '/static/images/default-clan.png'"
             mode="aspectFill"
           />
           <view class="card-info">

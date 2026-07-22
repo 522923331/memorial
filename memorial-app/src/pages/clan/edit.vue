@@ -14,7 +14,7 @@
         <view class="cover-picker" @tap="chooseCover">
           <image
             class="cover"
-            :src="form.coverImage || '/static/images/default-avatar.png'"
+            :src="form.coverImage || '/static/images/default-clan.png'"
             mode="aspectFill"
           />
           <text class="cover-tip">{{ form.coverImage ? '点击更换' : '点击选择封面' }}</text>

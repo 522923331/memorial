@@ -3,7 +3,7 @@
     <view v-if="clan" class="header">
       <image
         class="cover"
-        :src="clan.coverImage || '/static/images/default-avatar.png'"
+        :src="clan.coverImage || '/static/images/default-clan.png'"
         mode="aspectFill"
       />
       <view class="header-info">
